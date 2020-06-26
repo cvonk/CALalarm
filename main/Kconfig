@@ -1,0 +1,22 @@
+menu "Clock - main"
+
+    config CLOCK_WS2812_PIN
+        int "GPIO# to WS2812 DATA"
+        default 18
+        help
+            Transmit GPIO pin on ESP32 that connects to DATA on the LED circle
+
+    config CLOCK_WS2812_COUNT
+        int "Number of LEDs"
+        default 60
+        help
+            Number of WS2812 pixels on LED circle
+
+    config CLOCK_GAS_CALENDAR_URL
+        string "Google script uri"
+        default "https://script.google.com/macros/s/AKfycbxBse1Ogq2OsaYxejVOn05hqmeyA5aM2Xpb3wem0b38bhWt9C6e/exec"
+        help
+            Public URL of the Google Apps script that supplies JSON of the
+            calendar events.
+
+endmenu
