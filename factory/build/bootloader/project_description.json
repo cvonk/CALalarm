@@ -1,0 +1,20 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader/subproject",
+    "build_dir":          "C:/Users/coert/embedded/ESP32_Calendar-clock-Sander/factory/build/bootloader",
+    "config_file":        "C:/Users/coert/embedded/ESP32_Calendar-clock-Sander/factory/sdkconfig",
+    "config_defaults":    "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "GIT-NOTFOUND",
+    "target":             "esp32",
+    "phy_data_partition": "",
+    "monitor_baud" :      "115200",
+    "monitor_toolprefix": "xtensa-esp32-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/efuse/Kconfig;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp32/Kconfig;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp_common/Kconfig;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/log/Kconfig;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader/Kconfig.projbuild;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esptool_py/Kconfig.projbuild;C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_rom", "esptool_py", "log", "main", "micro-ecc", "partition_table", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader_support", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/efuse", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp32", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp_common", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp_rom", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esptool_py", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/log", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader/subproject/main", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader/subproject/components/micro-ecc", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/partition_table", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/soc", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/spi_flash", "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/xtensa", "" ]
+}

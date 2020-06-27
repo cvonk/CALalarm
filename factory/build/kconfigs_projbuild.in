@@ -1,0 +1,5 @@
+source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/app_update/Kconfig.projbuild"
+source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/bootloader/Kconfig.projbuild"
+source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esptool_py/Kconfig.projbuild"
+source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/partition_table/Kconfig.projbuild"
+source "C:/Users/coert/embedded/ESP32_Calendar-clock-Sander/factory/main/Kconfig.projbuild"
