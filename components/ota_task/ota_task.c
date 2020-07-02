@@ -67,7 +67,7 @@ _versions_match(esp_app_desc_t const * const desc1, esp_app_desc_t const * const
 void
 ota_task(void * pvParameter)
 {
-    ESP_LOGI(TAG, "Starting OTA (%s)", CONFIG_FIRMWARE_UPGRADE_URL);
+    ESP_LOGI(TAG, "Starting OTA (%s)", CONFIG_CLOCK_OTA_FIRMWARE_URL);
 
     esp_partition_t const * const configured_part = esp_ota_get_boot_partition();
     esp_partition_t const * const running_part = esp_ota_get_running_partition();
@@ -79,7 +79,7 @@ ota_task(void * pvParameter)
     ESP_LOGI(TAG, "Running partition %s at offset 0x%08x", running_part->label, running_part->address);
 
     esp_http_client_config_t config = {
-        .url = CONFIG_FIRMWARE_UPGRADE_URL,
+        .url = CONFIG_CLOCK_OTA_FIRMWARE_URL
         //.cert_pem = (char *)server_cert_pem_start,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -95,7 +95,7 @@ ota_task(void * pvParameter)
     }
     esp_http_client_fetch_headers(client);
     if (esp_http_client_get_status_code(client) != 200) {
-        ESP_LOGE(TAG, "File doesn't exist on server (%s), status=%d", CONFIG_FIRMWARE_UPGRADE_URL, esp_http_client_get_status_code(client));
+        ESP_LOGE(TAG, "File doesn't exist on server (%s), status=%d", CONFIG_CLOCK_OTA_FIRMWARE_URL, esp_http_client_get_status_code(client));
         esp_http_client_cleanup(client);
         _delete_task();
     }
@@ -133,7 +133,7 @@ ota_task(void * pvParameter)
                     esp_app_desc_t invalid_app_info;
                     if (esp_ota_get_partition_description(last_invalid_app, &invalid_app_info) == ESP_OK) {
                         ESP_LOGI(TAG, "Firmware marked invalid: %s.%s (%s %s)",
-                            invalid_app_info.project_name, invalid_app_info.version, invalid_app_info.date, invalid_app_info_info.time);
+                            invalid_app_info.project_name, invalid_app_info.version, invalid_app_info.date, invalid_app_info.time);
                     }
                     if (last_invalid_app != NULL) {
                         if (_versions_match(&invalid_app_info, &new_app_info)) {
