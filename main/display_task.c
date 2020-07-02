@@ -8,13 +8,14 @@
  **/
 
 #include <sdkconfig.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_log.h>
-#include <driver/rmt.h>
-#include <string.h>
+#include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
+#include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <driver/rmt.h>
 #include <led_strip.h>
 #include <cJSON.h>
 
@@ -27,29 +28,48 @@
 static const char * TAG = "display_task";
 
 typedef struct {
-    uint16_t first, last;
-    uint16_t hue;
+    time_t start, stop;
 } PACK8 event_t;
 
 enum MAX_EVENTS { MAX_EVENTS = 30 };
 typedef event_t events_t[MAX_EVENTS];
 
+static time_t
+_str2time(char * str) {  // e.g. 2020-06-25T22:30:16.329Z
+    struct tm tm;
+    strptime(str, "%Y-%m-%dT%H:%M:%S", &tm);
+    return mktime(&tm);
+}
+
 static void  // far from ideal, but it gets the job done
-_updateEventDetail(char const * const key, uint const value, event_t * const event )
+_updateEventDetail(char const * const key,
+char * const value,
+event_t * const event )
 {
-    if (strcmp(key, "first") == 0) {
-        event->first = value;
-    } else if (strcmp(key, "last") == 0) {
-        event->last = value;
-    } else if (strcmp(key, "hue") == 0) {
-        event->hue = value;
+    if (strcmp(key, "start") == 0) {
+        event->start = _str2time(value);
+    } else if (strcmp(key, "stop") == 0) {
+        event->stop = _str2time(value);
     } else {
         ESP_LOGE(TAG, "%s: unrecognized key(%s) ", __func__, key);
     }
 }
 
+static void
+_setTime(time_t const time)
+{
+    struct timeval tv = { .tv_sec = time, .tv_usec = 0};
+    settimeofday(&tv, NULL);
+}
+
+static time_t
+_getTime(time_t * time_)
+{
+    return time(time_);
+}
+
 static uint
-_parseJson(char *serializedJson, events_t events, struct tm * time_info)
+_parseJson(char *serializedJson, events_t events, time_t * time)
 {
     uint len = 0;
 
@@ -63,18 +83,16 @@ _parseJson(char *serializedJson, events_t events, struct tm * time_info)
         ESP_LOGE(TAG, "JSON.time is missing or not an String");
         return 0;
     }
+    *time = _str2time(jsonTime->valuestring);
 
-    // e.g. 2020-06-25T22:30:16.329Z
-    strptime(jsonTime->valuestring, "%Y-%m-%dT%H:%M:%S", time_info);
-
-    cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "events");
+    cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "raw");
     if (!jsonEvents || jsonEvents->type != cJSON_Array) {
         ESP_LOGE(TAG, "JSON.events is missing or not an Array");
         return 0;
     }
 
-    enum DETAIL_COUNT { DETAIL_COUNT = 3 };
-    static char const * const detailNames[DETAIL_COUNT] = {"first", "last", "hue"};
+    enum DETAIL_COUNT { DETAIL_COUNT = 2 };
+    static char const * const detailNames[DETAIL_COUNT] = {"start", "stop"};
 
     event_t * event = events;
     for (int ii = 0; ii < cJSON_GetArraySize(jsonEvents) && ii < MAX_EVENTS; ii++, len++) {
@@ -86,15 +104,11 @@ _parseJson(char *serializedJson, events_t events, struct tm * time_info)
         }
         for (uint vv = 0; vv < ARRAYSIZE(detailNames); vv++) {
             cJSON const *const jsonObj = cJSON_GetObjectItem(jsonEvent, detailNames[vv]);
-            if (!jsonObj || jsonObj->type != cJSON_Number) {
-                ESP_LOGE(TAG, "JSON.event[%d].%s is missing or not a Number", ii, detailNames[vv]);
+            if (!jsonObj || jsonObj->type != cJSON_String) {
+                ESP_LOGE(TAG, "JSON.event[%d].%s is missing or not a String", ii, detailNames[vv]);
                 return 0;
             }
-            _updateEventDetail(detailNames[vv], jsonObj->valueint, event);
-        }
-        if (event->last < event->first || event->last >= CONFIG_CLOCK_WS2812_COUNT) {
-            ESP_LOGE(TAG, "JSON.events[%d] illegal start/end value", ii);
-            return 0;
+            _updateEventDetail(detailNames[vv], jsonObj->valuestring, event);
         }
         event++;
     }
@@ -102,7 +116,7 @@ _parseJson(char *serializedJson, events_t events, struct tm * time_info)
     return len;
 }
 
-// https://en.wikipedia.org/wiki/HSL_and_HSV
+// algorithm from https://en.wikipedia.org/wiki/HSL_and_HSV
 static void
 _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t *b)
 {
@@ -147,21 +161,6 @@ _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t 
     }
 }
 
-static void
-_setTime(struct tm * tm)
-{
-    struct timeval tv = { .tv_sec = mktime(tm), .tv_usec = 0};
-    settimeofday(&tv, NULL);
-}
-
-static void
-_getTime(struct tm * tm)
-{
-        time_t now;
-        time(&now);
-        localtime_r(&now, tm);
-}
-
 void
 display_task(void * ipc_void)
 {
@@ -183,31 +182,60 @@ display_task(void * ipc_void)
     ESP_ERROR_CHECK(strip->clear(strip, 100));  // turn off all LEDs
 
     uint len = 0;
-    struct tm tm;
+    time_t now;
     while (1) {
         char * msg;
         if (xQueueReceive(jsonQ, &msg, (TickType_t)(10000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-            len = _parseJson(msg, events, &tm); // translate from serialized JSON "msg" to C representation "events"
+            len = _parseJson(msg, events, &now); // translate from serialized JSON "msg" to C representation "events"
             free(msg);
-            _setTime(&tm);
+            _setTime(now);
         } else {
-            _getTime(&tm);
-        }
+            _getTime(&now);
 
-        uint hourHandPixel = tm.tm_hour%12 * CONFIG_CLOCK_WS2812_COUNT / 12 + tm.tm_min * CONFIG_CLOCK_WS2812_COUNT / (12 * 60);
-
-        for (int pp = 0; pp < CONFIG_CLOCK_WS2812_COUNT; pp++) {
-            ESP_ERROR_CHECK(strip->set_pixel(strip, pp, 0, 0, 0));
         }
-        event_t const * event = events;
+        struct tm nowTm;
+        localtime_r(&now, &nowTm);
+
+        event_t * event = events;
+        ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d",
+                 nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
+
+        uint hue = 0;
         for (uint ee = 0; ee < len; ee++, event++) {
-            for (uint pp = event->first; pp <= event->last; pp++) {
-                uint r, g, b;
-                uint const s = 100 - 100 * ((pp - hourHandPixel) % 60) / CONFIG_CLOCK_WS2812_COUNT;
-                //ESP_LOGI(TAG, "pxl%02d: %03d", pp, s);
-                _hsv2rgb(event->hue, 100, s, &r, &g, &b);
-                ESP_ERROR_CHECK(strip->set_pixel(strip, pp, r, g, b));
+            struct tm startTm;
+            struct tm stopTm;
+            localtime_r(&event->start, &startTm);
+            localtime_r(&event->stop, &stopTm);
+            double startsInHr = difftime(event->start, now) / 3600;
+            double stopsInHr = difftime(event->stop, now) / 3600;
+
+            ESP_LOGI(TAG, "event %02d: start = %04d-%02d-%02d %02d:%02d (in %2.2fh), stop = %04d-%02d-%02d %02d:%02d (in %2.2fh)", ee,
+                startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
+                stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr);
+
+            //bool alreadyStarted = startsInHr < 0.0;
+            bool alreadyFinished = stopsInHr < 0.0;
+            bool startsWithin12h = startsInHr < 12.0;
+            //bool stopsWithin12h = stopsInHr < 12.0;
+
+            if (startsWithin12h && !alreadyFinished) {
+                double nowInHr = nowTm.tm_hour % 12 + (float)nowTm.tm_min / 60.0;
+                uint const pxlPerHr = CONFIG_CLOCK_WS2812_COUNT / 12;
+                uint const nowPxl = round(nowInHr * pxlPerHr);
+                uint const startPxl = round((startsInHr + nowInHr) * pxlPerHr);
+                uint const stopPxl = round((stopsInHr + nowInHr) * pxlPerHr);
+                ESP_LOGI(TAG, " startPxl = %d  stopPxl = %d", startPxl, stopPxl);
+
+                for (uint pp = startPxl; pp <= stopPxl; pp++) {
+                    uint const brightness = 70 - (pp - nowPxl);  // [10 .. 70]
+                    uint r, g, b;
+                    _hsv2rgb(hue, 100, brightness, &r, &g, &b);
+                    ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % 60, hue, brightness, r, g, b);
+                    ESP_ERROR_CHECK(strip->set_pixel(strip, pp % 60, r, g, b));
+                }
+                uint const goldenAngle = 137;
+                hue = (hue + goldenAngle) % 360;
             }
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));

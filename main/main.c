@@ -85,6 +85,7 @@ _wifiDisconnectHandler(void * arg, esp_event_base_t event_base, int32_t event_id
         ESP_LOGI(TAG, "Stopping webserver");
         http_post_server_stop(*server);
     }
+    esp_wifi_connect();
 }
 
 static void
