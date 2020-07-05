@@ -1,4 +1,4 @@
-menu "Clock interface config"
+menu "Clock - reset"
 
 config RESET_PROVISIONED
     bool
