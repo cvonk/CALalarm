@@ -1,5 +1,0 @@
-source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/efuse/Kconfig"
-source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp32/Kconfig"
-source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/esp_common/Kconfig"
-source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/log/Kconfig"
-source "C:/Users/coert/espressif/esp-idf-v4.1-beta2/components/spi_flash/Kconfig"
