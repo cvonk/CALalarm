@@ -148,7 +148,7 @@ app_main()
 
     _connect2wifi();  // waits for connection established
 
-    //xTaskCreate(&ota_task, "ota_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&ota_task, "ota_task", 4096, NULL, 5, NULL);
 
     static display_task_ipc_t display_task_ipc;
     display_task_ipc.jsonQ = jsonQ;

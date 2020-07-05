@@ -1,9 +1,16 @@
 menu "Clock - OTA Updates"
 
-config CLOCK_OTA_FIRMWARE_URL
-    string "firmware upgrade url"
-    default "https://coertvonk.com/svonk/calenderclock/calenderclock.bin"
+config OTA_FIRMWARE_URL
+    string "firmware upgrade url endpoint"
+    default "http://nas.vonk:83/embedded/calendarclock.bin"
     help
-        URL of server that hosts the firmware
+        URL of server which hosts the firmware
         image.
 endmenu
+
+config OTA_RECV_TIMEOUT
+    int "OTA Receive Timeout"
+    default 5000
+    help
+        Maximum time for reception
+
