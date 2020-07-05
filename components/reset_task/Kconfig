@@ -1,15 +1,17 @@
-menu "Clock - RESET"
+# erase sdkconfig after changing this file, so it gets rebuild
+menu "RESET"
 
-config CLOCK_RESET_PIN
-    int "RESET GPIO# on ESP32"
-    default 0
-    help
-        RESET input GPIO# on ESP32 that connects to a pull down switch
+    config RESET_PIN
+        int "RESET GPIO# on ESP32"
+        default 0
+        help
+            RESET input GPIO pin on ESP32 that connects to a pull down switch.
 
-config CLOCK_RESET_SECONDS
-    int "RESET press duration"
-    default 3
-    help
-        Number of seconds that RESET needs to be hold low before erasing WiFi credentials
+    config RESET_SECONDS
+        int "RESET press duration"
+        default 3
+        help
+            Number of seconds that RESET needs to be hold low before triggering
+            a factory reset (switch to factory app partition and erase WiFi credentials)
 
-endmenu
+    endmenu
