@@ -1,3 +1,3 @@
+**/build/
 sdkconfig
-**/build
-sdkconfig
+factory/sdkconfig
