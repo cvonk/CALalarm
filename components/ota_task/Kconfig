@@ -12,5 +12,5 @@ config OTA_RECV_TIMEOUT
     int "OTA Receive Timeout"
     default 5000
     help
-        Maximum time for reception
+        Maximum time for reception [sec]
 
