@@ -177,9 +177,6 @@ _showEventOnClock(event_t const * const event, time_t const now, uint * const hu
     struct tm startTm, stopTm;
     localtime_r(&event->start, &startTm);
     localtime_r(&event->stop, &stopTm);
-    ESP_LOGI(TAG, "event: start = %04d-%02d-%02d %02d:%02d (in %2.2fh), stop = %04d-%02d-%02d %02d:%02d (in %2.2fh)",
-        startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
-        stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr);
 #endif
     uint const hrsOnClock = 12;
     bool const alreadyFinished = stopsInHr < 0;
@@ -192,8 +189,12 @@ _showEventOnClock(event_t const * const event, time_t const now, uint * const hu
         uint const nowPxl = round(hrsFromToc * pxlsPerHr);
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
-        ESP_LOGI(TAG, " nowPxl = %u, startPxl = %u  stopPxl = %u", nowPxl, startPxl, stopPxl);
-
+#if DEBUG
+        ESP_LOGI(TAG, "event: start = %04d-%02d-%02d %02d:%02d (in %5.2fh), stop = %04d-%02d-%02d %02d:%02d (in %5.2fh) => startPxl = %u  stopPxl = %u",
+                 startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
+                 stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
+                 startPxl, stopPxl);
+#endif
         for (uint pp = startPxl; pp <= stopPxl; pp++) {
             uint const minBrightness = 1;
             uint const maxBrightness = 50;
