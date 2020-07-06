@@ -20,7 +20,10 @@
         "esp_flash_partitions.h": "c",
         "esp_wifi.h": "c",
         "rmt.h": "c",
-        "led_strip.h": "c"
+        "led_strip.h": "c",
+        "appsscript-push-notif.json": "js",
+        "doGet.gs": "js",
+        "push-notifications.gs": "js",
     },
     "clang-format.executable": "C:/Program Files/LLVM/bin/clang-format.exe",
     "workbench.tree.indent": 20,
