@@ -190,12 +190,12 @@ _showEventOnClock(event_t const * const event, time_t const now, uint * const hu
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
-        ESP_LOGI(TAG, "event: start = %04d-%02d-%02d %02d:%02d (in %5.2fh), stop = %04d-%02d-%02d %02d:%02d (in %5.2fh) => startPxl = %u  stopPxl = %u",
+        ESP_LOGI(TAG, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                  stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
                  startPxl, stopPxl);
 #endif
-        for (uint pp = startPxl; pp <= stopPxl; pp++) {
+        for (uint pp = startPxl; pp < stopPxl; pp++) {
             uint const minBrightness = 1;
             uint const maxBrightness = 50;
             uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
@@ -236,12 +236,14 @@ display_task(void * ipc_void)
 
         // if there was an calendar update then apply it
 
-        char * const msg;
+        char * msg;
         if (xQueueReceive(jsonQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
             len = _parseJson(msg, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg);
+            ESP_LOGI(TAG, "Update");
             _setTime(now); // update out time-of-day
         } else {
+            ESP_LOGI(TAG, "No update");
             _getTime(&now);
         }
 
