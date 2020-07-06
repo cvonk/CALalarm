@@ -2,3 +2,4 @@
 **/sdkconfig
 factory/sdkconfig
 sdkconfig
+main/Kconfig
