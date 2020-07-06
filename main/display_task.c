@@ -163,6 +163,53 @@ _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t 
     }
 }
 
+static void
+_showEventOnClock(event_t const * const event, time_t const now, led_strip_t * const strip)
+{
+    static uint hue = 0;
+    struct tm nowTm;
+    localtime_r(&now, &nowTm);
+
+#define DEBUG (1)
+    ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
+    float const startsInHr = difftime(event->start, now) / 3600;
+    float const stopsInHr = difftime(event->stop, now) / 3600;
+#if DEBUG
+    struct tm startTm, stopTm;
+    localtime_r(&event->start, &startTm);
+    localtime_r(&event->stop, &stopTm);
+    ESP_LOGI(TAG, "event: start = %04d-%02d-%02d %02d:%02d (in %2.2fh), stop = %04d-%02d-%02d %02d:%02d (in %2.2fh)",
+        startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
+        stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr);
+#endif
+    uint const hrsOnClock = 12;
+    bool const alreadyFinished = stopsInHr < 0;
+    bool const startsWithin12h = startsInHr < hrsOnClock;
+
+    if (startsWithin12h && !alreadyFinished) {
+
+        float const pxlsPerHr = CONFIG_CLOCK_WS2812_COUNT / hrsOnClock;
+        float const hrsFromToc = nowTm.tm_hour % hrsOnClock + (float)nowTm.tm_min / 60.0;  // hours from top-of-clock
+        uint const nowPxl = round(hrsFromToc * pxlsPerHr);
+        uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
+        uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
+        ESP_LOGI(TAG, " nowPxl = %u, startPxl = %u  stopPxl = %u", nowPxl, startPxl, stopPxl);
+
+        for (uint pp = startPxl; pp <= stopPxl; pp++) {
+            uint const minBrightness = 5;
+            uint const maxBrightness = 30;
+            uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
+            uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
+            uint r, g, b;
+            _hsv2rgb(hue, 100, brightness, &r, &g, &b);
+            ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % CONFIG_CLOCK_WS2812_COUNT, hue, brightness, r, g, b);
+            ESP_ERROR_CHECK(strip->set_pixel(strip, pp % CONFIG_CLOCK_WS2812_COUNT, r, g, b));
+        }
+        uint const goldenAngle = 137;
+        hue = (hue + goldenAngle) % 360;
+    }
+}
+
 void
 display_task(void * ipc_void)
 {
@@ -198,53 +245,12 @@ display_task(void * ipc_void)
         } else {
             _getTime(&now);
         }
-        struct tm nowTm;
-        localtime_r(&now, &nowTm);
-        ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
 
         // loop through each event and set LEDs accordingly
 
         event_t const * event = events;
-        uint hue = 0;
         for (uint ee = 0; ee < len; ee++, event++) {
-
-#define DEBUG (1)
-            float const startsInHr = difftime(event->start, now) / 3600;
-            float const stopsInHr = difftime(event->stop, now) / 3600;
-#if DEBUG
-            struct tm startTm, stopTm;
-            localtime_r(&event->start, &startTm);
-            localtime_r(&event->stop, &stopTm);
-            ESP_LOGI(TAG, "event %02d: start = %04d-%02d-%02d %02d:%02d (in %2.2fh), stop = %04d-%02d-%02d %02d:%02d (in %2.2fh)", ee,
-                startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
-                stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr);
-#endif
-            uint const hrsOnClock = 12;
-            bool const alreadyFinished = stopsInHr < 0;
-            bool const startsWithin12h = startsInHr < hrsOnClock;
-
-            if (startsWithin12h && !alreadyFinished) {
-
-                float const pxlsPerHr = CONFIG_CLOCK_WS2812_COUNT / hrsOnClock;
-                float const hrsFromToc = nowTm.tm_hour % hrsOnClock + (float)nowTm.tm_min / 60.0;  // hours from top-of-clock
-                uint const nowPxl = round(hrsFromToc * pxlsPerHr);
-                uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
-                uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
-                ESP_LOGI(TAG, " nowPxl = %u, startPxl = %u  stopPxl = %u", nowPxl, startPxl, stopPxl);
-
-                for (uint pp = startPxl; pp <= stopPxl; pp++) {
-                    uint const minBrightness = 5;
-                    uint const maxBrightness = 30;
-                    uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
-                    uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
-                    uint r, g, b;
-                    _hsv2rgb(hue, 100, brightness, &r, &g, &b);
-                    ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % CONFIG_CLOCK_WS2812_COUNT, hue, brightness, r, g, b);
-                    ESP_ERROR_CHECK(strip->set_pixel(strip, pp % CONFIG_CLOCK_WS2812_COUNT, r, g, b));
-                }
-                uint const goldenAngle = 137;
-                hue = (hue + goldenAngle) % 360;
-            }
+            _showEventOnClock(event, now, strip);
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
     }
