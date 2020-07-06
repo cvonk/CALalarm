@@ -164,16 +164,15 @@ _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t 
 }
 
 static void
-_showEventOnClock(event_t const * const event, time_t const now, led_strip_t * const strip)
+_showEventOnClock(event_t const * const event, time_t const now, uint * const hue, led_strip_t * const strip)
 {
-    static uint hue = 0;
     struct tm nowTm;
     localtime_r(&now, &nowTm);
 
-#define DEBUG (1)
-    ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
+    //ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
     float const startsInHr = difftime(event->start, now) / 3600;
     float const stopsInHr = difftime(event->stop, now) / 3600;
+#define DEBUG (1)
 #if DEBUG
     struct tm startTm, stopTm;
     localtime_r(&event->start, &startTm);
@@ -196,17 +195,16 @@ _showEventOnClock(event_t const * const event, time_t const now, led_strip_t * c
         ESP_LOGI(TAG, " nowPxl = %u, startPxl = %u  stopPxl = %u", nowPxl, startPxl, stopPxl);
 
         for (uint pp = startPxl; pp <= stopPxl; pp++) {
-            uint const minBrightness = 5;
-            uint const maxBrightness = 30;
+            uint const minBrightness = 1;
+            uint const maxBrightness = 50;
             uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
             uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
             uint r, g, b;
-            _hsv2rgb(hue, 100, brightness, &r, &g, &b);
-            ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % CONFIG_CLOCK_WS2812_COUNT, hue, brightness, r, g, b);
+            _hsv2rgb(*hue, 100, brightness, &r, &g, &b);
             ESP_ERROR_CHECK(strip->set_pixel(strip, pp % CONFIG_CLOCK_WS2812_COUNT, r, g, b));
         }
         uint const goldenAngle = 137;
-        hue = (hue + goldenAngle) % 360;
+        *hue = (*hue + goldenAngle) % 360;
     }
 }
 
@@ -237,7 +235,7 @@ display_task(void * ipc_void)
 
         // if there was an calendar update then apply it
 
-        char * msg;
+        char * const msg;
         if (xQueueReceive(jsonQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
             len = _parseJson(msg, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg);
@@ -248,9 +246,10 @@ display_task(void * ipc_void)
 
         // loop through each event and set LEDs accordingly
 
+        uint hue = 0;
         event_t const * event = events;
         for (uint ee = 0; ee < len; ee++, event++) {
-            _showEventOnClock(event, now, strip);
+            _showEventOnClock(event, now, &hue, strip);
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
     }

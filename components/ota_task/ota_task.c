@@ -50,13 +50,8 @@ static void __attribute__((noreturn)) _delete_task()
     (void)vTaskDelete(NULL);
 
     while (1) {  // FreeRTOS requires that tasks never return
-        ;
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-}
-
-static void _infinite_loop(void)
-{
-    _delete_task();
 }
 
 static bool _versions_match(esp_app_desc_t const * const desc1, esp_app_desc_t const * const desc2)
@@ -70,21 +65,18 @@ static bool _versions_match(esp_app_desc_t const * const desc1, esp_app_desc_t c
 
 void ota_task(void * pvParameter)
 {
-    ESP_LOGI(TAG, "Starting OTA update (%s)", CONFIG_OTA_FIRMWARE_URL);
+    ESP_LOGI(TAG, "Checking for OTA update (%s)", CONFIG_OTA_FIRMWARE_URL);
 
     esp_partition_t const * const configured_part = esp_ota_get_boot_partition();
     esp_partition_t const * const running_part = esp_ota_get_running_partition();
     esp_partition_t const * update_part = esp_ota_get_next_update_partition(NULL);
 
     if (configured_part != running_part) {
-        // This can happen if either the OTA boot data or preferred boot image become corrupted somehow
+        // This can happen if either the OTA boot data or preferred boot image become corrupted
         ESP_LOGW(TAG, "Configured OTA boot partition at offset 0x%08x, but running from offset 0x%08x",
                  configured_part->address, running_part->address);
     }
-    ESP_LOGI(TAG, "Running partition %s (type %d-%d, offset 0x%08x)",
-             running_part->label, running_part->type, running_part->subtype, running_part->address);
-
-    ESP_LOGI(TAG, "Running partition %s at offset 0x%08x", running_part->label, running_part->address);
+    ESP_LOGI(TAG, "Running part %s at offset 0x%08x", running_part->label, running_part->address);
 
     esp_http_client_config_t config = {
         .url = CONFIG_OTA_FIRMWARE_URL,
@@ -109,7 +101,7 @@ void ota_task(void * pvParameter)
         _delete_task();
     }
 
-    ESP_LOGI(TAG, "Writing to partition %s at offset 0x%x", update_part->label, update_part->address);
+    ESP_LOGI(TAG, "Writing part %s at offset 0x%x", update_part->label, update_part->address);
     assert(update_part != NULL);
 
     int binary_file_length = 0;
@@ -128,6 +120,11 @@ void ota_task(void * pvParameter)
                 if (data_read > sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t)) {
 
                     memcpy(&new_app_info, &ota_write_data[sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t)], sizeof(esp_app_desc_t));
+                    if (new_app_info.magic_word != ESP_APP_DESC_MAGIC_WORD) {
+                        ESP_LOGW(TAG, "No magic in .bin");
+                        _http_cleanup(client);
+                        _delete_task();
+                    }
                     ESP_LOGI(TAG, "Firmware on server: %s.%s (%s %s)", new_app_info.project_name, new_app_info.version, new_app_info.date, new_app_info.time);
 
                     esp_app_desc_t running_app_info;
@@ -143,15 +140,15 @@ void ota_task(void * pvParameter)
                         if (_versions_match(&invalid_app_info, &new_app_info)) {
                             ESP_LOGW(TAG, "Version on server is the same as invalid version (%s)", invalid_app_info.version);
                             _http_cleanup(client);
-                            _infinite_loop();
+                            _delete_task();
                         }
                     }
                     if (_versions_match(&new_app_info, &running_app_info)) {
                         ESP_LOGW(TAG, "No update available");
                         _http_cleanup(client);
-                        _infinite_loop();
+                        _delete_task();
                     }
-                    ESP_LOGW(TAG, "Downloading OTA update");
+                    ESP_LOGW(TAG, "Downloading OTA update ..");
                     image_header_was_checked = true;
 
                     err = esp_ota_begin(update_part, OTA_SIZE_UNKNOWN, &update_handle);
@@ -160,7 +157,6 @@ void ota_task(void * pvParameter)
                         _http_cleanup(client);
                         _delete_task();
                     }
-                    ESP_LOGI(TAG, "downloading OTA Update ..");
                 } else {
                     ESP_LOGE(TAG, "rx package len err");
                     _http_cleanup(client);
@@ -173,7 +169,7 @@ void ota_task(void * pvParameter)
                 _delete_task();
             }
             binary_file_length += data_read;
-            ESP_LOGD(TAG, "Wrote %d bytes", binary_file_length);
+            ESP_LOGI(TAG, "Wrote %d%% of %d kB", 100 * binary_file_length / update_part->size, update_part->size / 1024);
         } else if (data_read == 0) {
            // esp_http_client_read never returns negative error code, we rely on `errno` to check for underlying transport connectivity closure if any
             if (errno == ECONNRESET || errno == ENOTCONN) {
