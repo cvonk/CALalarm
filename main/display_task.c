@@ -24,8 +24,10 @@
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
 #define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
 #define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
+#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
-static const char * TAG = "display_task";
+static char const * const TAG = "display_task";
 
 typedef struct {
     time_t start, stop;
@@ -69,7 +71,7 @@ _getTime(time_t * time_)
 }
 
 static uint
-_parseJson(char *serializedJson, events_t events, time_t * time)
+_parseJson(char const * const serializedJson, time_t * const time, events_t events)
 {
     uint len = 0;
 
@@ -183,56 +185,62 @@ display_task(void * ipc_void)
 
     uint len = 0;
     time_t now;
+    time_t const loopInMsec = 10000UL;  // how often the while-loop runs [msec]
     while (1) {
-        char * msg;
-        if (xQueueReceive(jsonQ, &msg, (TickType_t)(10000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-            len = _parseJson(msg, events, &now); // translate from serialized JSON "msg" to C representation "events"
+        // if there was an calendar update then apply it
+
+        char * msg;
+        if (xQueueReceive(jsonQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
+            len = _parseJson(msg, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg);
-            _setTime(now);
+            _setTime(now); // update out time-of-day
         } else {
             _getTime(&now);
-
         }
         struct tm nowTm;
         localtime_r(&now, &nowTm);
+        ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
 
-        event_t * event = events;
-        ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d",
-                 nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
+        // loop through each event and set LEDs accordingly
 
+        event_t const * event = events;
         uint hue = 0;
         for (uint ee = 0; ee < len; ee++, event++) {
-            struct tm startTm;
-            struct tm stopTm;
+
+#define DEBUG (1)
+            float const startsInHr = difftime(event->start, now) / 3600;
+            float const stopsInHr = difftime(event->stop, now) / 3600;
+#if DEBUG
+            struct tm startTm, stopTm;
             localtime_r(&event->start, &startTm);
             localtime_r(&event->stop, &stopTm);
-            double startsInHr = difftime(event->start, now) / 3600;
-            double stopsInHr = difftime(event->stop, now) / 3600;
-
             ESP_LOGI(TAG, "event %02d: start = %04d-%02d-%02d %02d:%02d (in %2.2fh), stop = %04d-%02d-%02d %02d:%02d (in %2.2fh)", ee,
                 startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                 stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr);
-
-            //bool alreadyStarted = startsInHr < 0.0;
-            bool alreadyFinished = stopsInHr < 0.0;
-            bool startsWithin12h = startsInHr < 12.0;
-            //bool stopsWithin12h = stopsInHr < 12.0;
+#endif
+            uint const hrsOnClock = 12;
+            bool const alreadyFinished = stopsInHr < 0;
+            bool const startsWithin12h = startsInHr < hrsOnClock;
 
             if (startsWithin12h && !alreadyFinished) {
-                double nowInHr = nowTm.tm_hour % 12 + (float)nowTm.tm_min / 60.0;
-                uint const pxlPerHr = CONFIG_CLOCK_WS2812_COUNT / 12;
-                uint const nowPxl = round(nowInHr * pxlPerHr);
-                uint const startPxl = round((startsInHr + nowInHr) * pxlPerHr);
-                uint const stopPxl = round((stopsInHr + nowInHr) * pxlPerHr);
-                ESP_LOGI(TAG, " startPxl = %d  stopPxl = %d", startPxl, stopPxl);
+
+                float const pxlsPerHr = CONFIG_CLOCK_WS2812_COUNT / hrsOnClock;
+                float const hrsFromToc = nowTm.tm_hour % hrsOnClock + (float)nowTm.tm_min / 60.0;  // hours from top-of-clock
+                uint const nowPxl = round(hrsFromToc * pxlsPerHr);
+                uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
+                uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
+                ESP_LOGI(TAG, " nowPxl = %u, startPxl = %u  stopPxl = %u", nowPxl, startPxl, stopPxl);
 
                 for (uint pp = startPxl; pp <= stopPxl; pp++) {
-                    uint const brightness = 70 - (pp - nowPxl);  // [10 .. 70]
+                    uint const minBrightness = 5;
+                    uint const maxBrightness = 30;
+                    uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
+                    uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
                     uint r, g, b;
                     _hsv2rgb(hue, 100, brightness, &r, &g, &b);
-                    ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % 60, hue, brightness, r, g, b);
-                    ESP_ERROR_CHECK(strip->set_pixel(strip, pp % 60, r, g, b));
+                    ESP_LOGI(TAG, "  px %02d: hue = %d, brightness = %d => #%02X%02X%02X", pp % CONFIG_CLOCK_WS2812_COUNT, hue, brightness, r, g, b);
+                    ESP_ERROR_CHECK(strip->set_pixel(strip, pp % CONFIG_CLOCK_WS2812_COUNT, r, g, b));
                 }
                 uint const goldenAngle = 137;
                 hue = (hue + goldenAngle) % 360;

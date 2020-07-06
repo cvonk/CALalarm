@@ -62,10 +62,10 @@ static void _infinite_loop(void)
 static bool _versions_match(esp_app_desc_t const * const desc1, esp_app_desc_t const * const desc2)
 {
     return
-        strncmp(desc1->project_name, desc2->project_name, ARRAYSIZE(desc1->project_name)) == 0 &&
-        strncmp(desc1->version, desc2->version, ARRAYSIZE(desc1->version)) == 0 &&
-        strncmp(desc1->date, desc2->date, ARRAYSIZE(desc1->date)) == 0 &&
-        strncmp(desc1->time, desc2->time, ARRAYSIZE(desc1->time)) == 0;
+        strncmp(desc1->project_name, desc2->project_name, sizeof(desc1->project_name)) == 0 &&
+        strncmp(desc1->version, desc2->version, sizeof(desc1->version)) == 0 &&
+        strncmp(desc1->date, desc2->date, sizeof(desc1->date)) == 0 &&
+        strncmp(desc1->time, desc2->time, sizeof(desc1->time)) == 0;
 }
 
 void ota_task(void * pvParameter)
