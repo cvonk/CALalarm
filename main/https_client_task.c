@@ -28,6 +28,7 @@
 #include <lwip/dns.h>
 
 #include "https_client_task.h"
+#include "mqtt_msg.h"
 
 static const char * TAG = "https_client_task";
 static char * _data = NULL;
@@ -71,10 +72,22 @@ https_client_task(void * ipc_void)
 
                 _data[_data_len] = '\0';
                 ESP_LOGI(TAG, "body = \"%.*s\"", _data_len, _data);
-                char * const msg = strdup(_data);
-                if (xQueueSendToBack(ipc->jsonQ, &msg, 0) != pdPASS) {
-                    ESP_LOGW(TAG, "Queue full");
-                    free(msg);
+                {
+                    char * const msg = strdup(_data);
+                    if (xQueueSendToBack(ipc->jsonQ, &msg, 0) != pdPASS) {
+                        ESP_LOGW(TAG, "Queue full");
+                        free(msg);
+                    }
+                }
+                {
+                    toMqttMsg_t msg = {
+                        .dataType = TO_MQTT_MSGTYPE_DATA,
+                        .data = strdup(_data)
+                    };
+                    if (xQueueSendToBack(ipc->toMqttQ, &msg, 0) != pdPASS) {
+                        ESP_LOGE(TAG, "toMqttQ full (2nd)");  // should never happen, since its the first msg
+                        free(msg.data);
+                    }
                 }
             }
         }

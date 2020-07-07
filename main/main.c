@@ -198,6 +198,7 @@ app_main()
     static https_client_task_ipc_t https_client_task_ipc;
     https_client_task_ipc.triggerQ = triggerQ;
     https_client_task_ipc.jsonQ = jsonQ;
+    https_client_task_ipc.toMqttQ = toMqttQ;
     xTaskCreate(&https_client_task, "https_client_task", 4096, &https_client_task_ipc, 5, NULL);
 
     static mqtt_client_task_ipc_t mqtt_client_task_ipc;
