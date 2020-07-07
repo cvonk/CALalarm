@@ -1,5 +1,17 @@
 menu "Clock - main"
 
+    config WIFI_SSID
+        string "WiFi SSID"
+        default ""
+        help
+            SSID (network name). Leave empty for BLE provisioning.
+
+    config WIFI_PASSWD
+        string "WiFi Password"
+        default ""
+        help
+            WiFi password (WPA or WPA2). Leave empty for BLE provisioning.
+
     config CLOCK_WS2812_PIN
         int "GPIO# to WS2812 DATA"
         default 18
@@ -11,6 +23,13 @@ menu "Clock - main"
         default 60
         help
             Number of WS2812 pixels on LED circle
+
+    config CLOCK_GAS_INTERVAL
+        int "Polling interval for Google Apps Script"
+        default 2
+        help
+            Number of minutes between polling the calendar events using Google Apps Script.
+            When using push notifications this can be as high as e.g. 60 minutes.
 
     config CLOCK_GAS_CALENDAR_URL
         string "Google script uri"

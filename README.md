@@ -8,10 +8,11 @@ Goal visualize calendar appointments on an analog 12 clock.
 
 ## Features:
 
-- Over-the-air (OTA) updates
+- Shows calendar events in different colors using an LED circle placed behind the faceplate of a clock.
 - Remote restart, and version information (using MQTT)
 - Can use push notifications to provide timely updates to calendar changes.
-- Shows calendar events in different colors using an LED circle placed behind the faceplate of a clock.
+- Optional Over-the-air (OTA) updates
+- Optional WiFi provisioning using phone app
 
 ## Usage
 
@@ -27,11 +28,13 @@ Goal visualize calendar appointments on an analog 12 clock.
 :
 
 Parts:
-- ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32 or pretty much any ESP32 board.
+- ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32, MELIFE ESP32 or pretty much any ESP32 board.
 - "RGB LED Pixel Ring" with 60 WS2812B SMD5050 LEDs, e.g. Chinly 60 LEDs WS2812B 5050 RGB LED Pixel Ring Addressable DC5V ([shop](https://www.amazon.com/gp/product/B0794YVW3T)).  These WS2812B pixels are 5V, and draw about 60 mA each at full brightness.
-- 5 Volt, 3 Amp power supply
+- 5 Volt, 3 Amp power adapter
 - Capacitor
 - Resistor
+- Analog clock with glass face plate
+- Optional frosting spray (e.g.  Rust-Oleum Frosted Glass Spray Paint)
 
 The Data-in of the LED circle should be driven with 5V +/- 0.5V, but we seem to get away with using the 3.3V output from ESP32 with 470 Ohms in series.  To be safe, you should use a level shifter.
 
@@ -42,7 +45,7 @@ The software is a symbiosis betweeen a Google Script and firmware running on the
 See `script\doGet.gs`
 
 :
-: explain what it does
+: explain what it does and how to deploy
 :
 
 ## Firmware for the ESP32
@@ -57,7 +60,10 @@ The ESP32 calls the Google Script and updates the LEDs based on the calendar eve
 ### Configuration
 
 In the main directory, copy `Kconfig-example.projbuild` to `Kconfig.projbuild`, and delete `sdkconfig` so the build system will recreate it.  Either update the defaults in the `Kconfig.projbuild` files, or use `ctrl-shift-p` >> `ESP-IDF: launch gui configuration tool`.
+- `WIFI_SSID`: Name of the WiFi access point to connect to.  Leave blank when provisioning using BLE and a phone app.
+- `WIFI_PASSWD: Password of the WiFi access point to connect to.  Leave blank when provisioning using BLE and a phone app.
 - `CLOCK_WS2812_PIN`: Transmit GPIO# on ESP32 that connects to DATA on the LED circle.
+- `CLOCK_GAS_INTERVAL`: Number of minutes between polling the calendar events using Google Apps Script. When using push notifications this can be as high as e.g. 60 minutes.
 - `CLOCK_GAS_CALENDAR_URL`: Public URL of the Google Apps script that supplies calendar events as JSON.
 bin`).
 - `CLOCK_MQTT_URL`, URL of the MQTT broker.  For authentication include the username and password, e.g. `mqtt://user:passwd@host.local:1883`
@@ -68,7 +74,7 @@ bin`).
 
 ### Compile
 
-The software relies on the ESP-IDF SDK version >= 4.1-beta2 and accompanying tools. For development environment:(GNU toolchain, ESP-IDF, JTAG/OpenOCD, VSCode) refer to https://github.com/cvonk/vscode-starters/tree/master/ESP32
+The software relies on the ESP-IDF SDK version >= 4.1-beta2 and accompanying tools. For development environment:(GNU toolchain, ESP-IDF, JTAG/OpenOCD, VSCode) refer to [ESP32 vsCode Starter](https://github.com/cvonk/vscode-starters/tree/master/ESP32).
 
 The software loads in two stages:
   1. `factory.bin` configures the WiFi using phone app.
@@ -76,9 +82,12 @@ The software loads in two stages:
 
 Compile the `calendarclock.bin` first, by opening the top level folder in Microsft Visual Code start the and "Terminal >> Run Task >> Build - Build the application".  The resulting `build/calendarclock.bin` should be placed on the OTA file server (`OTA_FIRMWARE_URL`).
 
-### Provision and trigger OTA download
+### Provision WiFi credentials
 
-To provision the WiFi credentials, opening the folder `factory` in Microsft Visual Code start the and "Terminal >> Run Task >> Monitor - Start the monitor".  This will compile and flash the code.  After that it connects to the serial port to show the debug messages.  The serial rate is 115200 baud.
+If you're set your WiFi SSID and password using the `Kconfig` you're all set and should skip this section.
+
+To provision the WiFi credentials using a phone app, we need a `factory` app that the phone can connect to using Bluetooth Low-Energy (BLE).  Open the folder `factory` in Microsft Visual Code start the and "Terminal >> Run Task >> Monitor - Start the monitor".  This will compile and flash the code.  After that it connects to the serial port to show the debug messages.  The serial rate is 115200 baud.
+
 On your phone run the Espressif BLE Provisioning app
 - [Android](https://play.google.com/store/apps/details?id=com.espressif.provble)
 - [iOS](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141)
@@ -88,17 +97,23 @@ This stores the WiFi SSID and password in flash memory and triggers a OTA downlo
 
 (To erase the WiFi credentials, pull `GPIO# 0` down for at least 3 seconds.)
 
-OTA Updates can be used to upgrade or downgrade the code.  To determine if the currently running code is different as the code on the server, it compares the project name, version, date and time.  Note that these may not always updated by the SDK.
+### OTA download
+
+Besides connecting to WiFi, one of the first things the code does is check for OTA updates.  We use the term "updates" but it download the OTA update even when it is older.  This allows for downgrades. To determine if the currently running code is different as the code on the server, it compares the project name, version, date and time.  Note that these may not always updated by the SDK.
+
+The OTA server should support either HTTP or HTTPS.  If you WiFi name and password is provisioned using `Kconfig` it will be part of the binary, so you should use a server on your local network.
+
+Upon completion, the device resets to activate the downloaded code.
 
 ## Receive push notification from Google calendar changes
 
 To improve response time we have the option of using the [Push Notifications API](https://developers.google.com/calendar/v3/push):
 
-    Allows you to improve the response time of your application. It allows you to eliminate the extra network and compute costs involved with polling resources to determine if they have changed. Whenever a watched resource changes, the Google Calendar API notifies your application.
-    To use push notifications, you need to do three things:
-    1. Register the domain of your receiving URL.
-    2. Set up your receiving URL, or "Webhook" callback receiver.
-    3. Set up a notification channel for each resource endpoint you want to watch.
+> Allows you to improve the response time of your application. It allows you to eliminate the extra network and compute costs involved with polling resources to determine if they have changed. Whenever a watched resource changes, the Google Calendar API notifies your application.
+> To use push notifications, you need to do three things:
+> 1. Register the domain of your receiving URL.
+> 2. Set up your receiving URL, or "Webhook" callback receiver.
+> 3. Set up a notification channel for each resource endpoint you want to watch.
 
 For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy.  Please refer to [Traversing your access router](https://coertvonk.com/sw/embedded/turning-on-the-light-the-hard-way-26806#traverse) for more details.
 

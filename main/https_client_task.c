@@ -94,7 +94,7 @@ https_client_task(void * ipc_void)
         esp_http_client_cleanup(client);
 
         char * msg;
-        if (xQueueReceive(ipc->triggerQ, &msg, 12 * 60000L / portTICK_PERIOD_MS) == pdPASS) {
+        if (xQueueReceive(ipc->triggerQ, &msg, CONFIG_CLOCK_GAS_INTERVAL * 60000L / portTICK_PERIOD_MS) == pdPASS) {
             free(msg);
             ESP_LOGI(TAG, "triggered");
         }
