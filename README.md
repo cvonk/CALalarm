@@ -4,7 +4,10 @@ Shows upcoming events for the next 12 hours on a LED circle (incorporated in a c
 
 Goal visualize calendar appointments on an analog 12 clock.
 
+
 : add picture
+
+![Glass clock with LED circle behind](media/photo.png)
 
 ## Features:
 
@@ -31,10 +34,11 @@ Parts:
 - ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32, MELIFE ESP32 or pretty much any ESP32 board.
 - "RGB LED Pixel Ring" with 60 WS2812B SMD5050 LEDs, e.g. Chinly 60 LEDs WS2812B 5050 RGB LED Pixel Ring Addressable DC5V ([shop](https://www.amazon.com/gp/product/B0794YVW3T)).  These WS2812B pixels are 5V, and draw about 60 mA each at full brightness.
 - 5 Volt, 3 Amp power adapter
-- Capacitor
+- Capacitor (470 uF / 16V)
 - Resistor
-- Analog clock with glass face plate
+- Analog clock with glass face plate (e.g. Tempus TC6065S Wall Clock with Glass Metal Frame)
 - Optional frosting spray (e.g.  Rust-Oleum Frosted Glass Spray Paint)
+- Glass glue (e.g. Loctite Glass Glue)
 
 The Data-in of the LED circle should be driven with 5V +/- 0.5V, but we seem to get away with using the 3.3V output from ESP32 with 470 Ohms in series.  To be safe, you should use a level shifter.
 
