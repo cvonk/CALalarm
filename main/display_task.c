@@ -87,7 +87,7 @@ _parseJson(char const * const serializedJson, time_t * const time, events_t even
     }
     *time = _str2time(jsonTime->valuestring);
 
-    cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "raw");
+    cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "events");
     if (!jsonEvents || jsonEvents->type != cJSON_Array) {
         ESP_LOGE(TAG, "JSON.events is missing or not an Array");
         return 0;
