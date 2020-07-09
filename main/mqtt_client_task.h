@@ -1,7 +1,7 @@
 #pragma once
 
 typedef struct {
-    QueueHandle_t triggerQ;
+    QueueHandle_t toClientQ;
     QueueHandle_t toMqttQ;
 } mqtt_client_task_ipc_t;
 

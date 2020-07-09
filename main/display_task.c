@@ -20,6 +20,8 @@
 #include <cJSON.h>
 
 #include "display_task.h"
+#include "ipc_msgs.h"
+
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
 #define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
@@ -213,7 +215,7 @@ void
 display_task(void * ipc_void)
 {
     display_task_ipc_t * ipc = ipc_void;
-    QueueHandle_t jsonQ = ipc->jsonQ;
+    QueueHandle_t toDisplayQ = ipc->toDisplayQ;
 
     // install ws2812 driver
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_CLOCK_WS2812_PIN, RMT_CHANNEL_0);
@@ -236,10 +238,10 @@ display_task(void * ipc_void)
 
         // if there was an calendar update then apply it
 
-        char * msg;
-        if (xQueueReceive(jsonQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
-            len = _parseJson(msg, &now, events); // translate from serialized JSON "msg" to C representation "events"
-            free(msg);
+        toDisplayMsg_t msg;
+        if (xQueueReceive(toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
+            len = _parseJson(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
+            free(msg.data);
             ESP_LOGI(TAG, "Update");
             _setTime(now); // update out time-of-day
         } else {

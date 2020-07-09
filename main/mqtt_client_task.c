@@ -19,7 +19,7 @@
 #include <esp_ota_ops.h>
 
 #include "mqtt_client_task.h"
-#include "mqtt_msg.h"
+#include "ipc_msgs.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
@@ -66,6 +66,20 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                     esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
                     vTaskDelay(1000 / portTICK_PERIOD_MS);
                     esp_restart();
+
+                } else if (strncmp("push", event->data, event->data_len) == 0) {
+
+                    char const * const payload = "{ \"response\": \"pushing\" }";
+                    esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
+
+                    toClientMsg_t msg = {
+                        .dataType = TO_CLIENT_MSGTYPE_TRIGGER,
+                        .data = strdup("mqtt push")
+                    };
+                    if (xQueueSendToBack(_ipc->toClientQ, &msg, 0) != pdPASS) {
+                        ESP_LOGW(TAG, "Queue full");
+                        free(msg.data);
+                    }
 
                 } else if (strncmp("who", event->data, event->data_len) == 0) {
 

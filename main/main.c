@@ -28,7 +28,7 @@
 #include "https_client_task.h"
 #include "display_task.h"
 #include "mqtt_client_task.h"
-#include "mqtt_msg.h"
+#include "ipc_msgs.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
@@ -156,13 +156,13 @@ app_main()
 
     _initNvsFlash();
 
-    QueueHandle_t jsonQ = xQueueCreate(2, sizeof(char *));
-    QueueHandle_t triggerQ = xQueueCreate(2, sizeof(char *));
+    QueueHandle_t toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
+    QueueHandle_t toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
     QueueHandle_t toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
-    if (!jsonQ || !triggerQ) esp_restart();
+    if (!toDisplayQ || !toClientQ) esp_restart();
 
-    _http_post_server_ipc.triggerQ = triggerQ;
-    ESP_LOGI(TAG, "%s triggerQ = %p", __func__, triggerQ);
+    _http_post_server_ipc.toClientQ = toClientQ;
+    ESP_LOGI(TAG, "%s toClientQ = %p", __func__, toClientQ);
     // http_post_server is started in response to getting an IP address assigned
 
     _connect2wifi();  // waits for connection established
@@ -200,17 +200,17 @@ app_main()
     xTaskCreate(&ota_task, "ota_task", 4096, NULL, 5, NULL);
 
     static display_task_ipc_t display_task_ipc;
-    display_task_ipc.jsonQ = jsonQ;
+    display_task_ipc.toDisplayQ = toDisplayQ;
     xTaskCreate(&display_task, "display_task", 4096, &display_task_ipc, 5, NULL);
 
     static https_client_task_ipc_t https_client_task_ipc;
-    https_client_task_ipc.triggerQ = triggerQ;
-    https_client_task_ipc.jsonQ = jsonQ;
+    https_client_task_ipc.toClientQ = toClientQ;
+    https_client_task_ipc.toDisplayQ = toDisplayQ;
     https_client_task_ipc.toMqttQ = toMqttQ;
     xTaskCreate(&https_client_task, "https_client_task", 4096, &https_client_task_ipc, 5, NULL);
 
     static mqtt_client_task_ipc_t mqtt_client_task_ipc;
-    mqtt_client_task_ipc.triggerQ = triggerQ;
+    mqtt_client_task_ipc.toClientQ = toClientQ;
     mqtt_client_task_ipc.toMqttQ = toMqttQ;
     xTaskCreate(&mqtt_client_task, "mqtt_client_task", 2*4096, &mqtt_client_task_ipc, 5, NULL);
 }

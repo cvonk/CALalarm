@@ -28,7 +28,7 @@
 #include <lwip/dns.h>
 
 #include "https_client_task.h"
-#include "mqtt_msg.h"
+#include "ipc_msgs.h"
 
 static const char * TAG = "https_client_task";
 static char * _data = NULL;
@@ -72,20 +72,24 @@ https_client_task(void * ipc_void)
 
                 _data[_data_len] = '\0';
                 ESP_LOGI(TAG, "body = \"%.*s\"", _data_len, _data);
+
                 {
-                    char * const msg = strdup(_data);
-                    if (xQueueSendToBack(ipc->jsonQ, &msg, 0) != pdPASS) {
+                    toDisplayMsg_t msg = {
+                        .dataType = TO_DISPLAY_MSGTYPE_JSON,
+                        .data = strdup(_data)
+                    };
+                    if (xQueueSendToBack(ipc->toDisplayQ, &msg, 0) != pdPASS) {
                         ESP_LOGW(TAG, "Queue full");
-                        free(msg);
+                        free(msg.data);
                     }
                 }
-                {
+                {   // send a copy to MQTT broker
                     toMqttMsg_t msg = {
                         .dataType = TO_MQTT_MSGTYPE_DATA,
                         .data = strdup(_data)
                     };
                     if (xQueueSendToBack(ipc->toMqttQ, &msg, 0) != pdPASS) {
-                        ESP_LOGE(TAG, "toMqttQ full (2nd)");  // should never happen, since its the first msg
+                        ESP_LOGE(TAG, "toMqttQ full");
                         free(msg.data);
                     }
                 }
@@ -93,9 +97,9 @@ https_client_task(void * ipc_void)
         }
         esp_http_client_cleanup(client);
 
-        char * msg;
-        if (xQueueReceive(ipc->triggerQ, &msg, CONFIG_CLOCK_GAS_INTERVAL * 60000L / portTICK_PERIOD_MS) == pdPASS) {
-            free(msg);
+        toClientMsg_t msg;
+        if (xQueueReceive(ipc->toClientQ, &msg, CONFIG_CLOCK_GAS_INTERVAL * 60000L / portTICK_PERIOD_MS) == pdPASS) {
+            free(msg.data);
             ESP_LOGI(TAG, "triggered");
         }
     }

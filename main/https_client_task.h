@@ -1,8 +1,8 @@
 #pragma once
 
 typedef struct {
-    QueueHandle_t triggerQ;
-    QueueHandle_t jsonQ;
+    QueueHandle_t toClientQ;
+    QueueHandle_t toDisplayQ;
     QueueHandle_t toMqttQ;
 } https_client_task_ipc_t;
 

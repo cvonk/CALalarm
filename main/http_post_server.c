@@ -22,6 +22,8 @@
 #include <esp_http_server.h>
 
 #include "http_post_server.h"
+#include "ipc_msgs.h"
+
 #define MAX_CONTENT_LEN (2048)
 #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -29,10 +31,8 @@
 static const char * TAG = "https_server_task";
 
 typedef struct server_context_t {
-    QueueHandle_t triggerQ;
+    QueueHandle_t toClientQ;
 } server_context_t;
-
-http_post_server_ipc_t * ipc = NULL;
 
 esp_err_t
 _httpdPushHandler(httpd_req_t * req)
@@ -61,9 +61,14 @@ _httpdPushHandler(httpd_req_t * req)
     ESP_LOGI(TAG, "body = \"%.*s\"", req->content_len, buf);
 
     // trigger https_client_task
-    if (xQueueSendToBack(context->triggerQ, &buf, 0) != pdPASS) {
+
+    toClientMsg_t msg = {
+        .dataType = TO_CLIENT_MSGTYPE_TRIGGER,
+        .data = buf
+    };
+    if (xQueueSendToBack(context->toClientQ, &msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "Queue full");
-        free(buf);
+        free(msg.data);
     }
     httpd_resp_sendstr(req, "thank you");
     return ESP_OK;
@@ -75,13 +80,12 @@ http_post_server_stop(httpd_handle_t server)
     httpd_stop(server);
 }
 
-
 httpd_handle_t
 http_post_server_start(void * ipc_void)
 {
-    ipc = ipc_void;  // store for when we have something to sent
+    http_post_server_ipc_t * ipc = ipc_void;  // store for when we have something to sent
     static server_context_t context;
-    context.triggerQ = ipc->triggerQ;
+    context.toClientQ = ipc->toClientQ;
 
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -93,7 +97,6 @@ http_post_server_start(void * ipc_void)
     }
 
     ESP_LOGI(TAG, "Registering URI handler(s)");
-    ESP_LOGI(TAG, "%s triggerQ = %p", __func__, context.triggerQ);
     httpd_uri_t httpd_push_uri = {
         .uri = "/api/push",
         .method = HTTP_POST,
