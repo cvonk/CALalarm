@@ -30,6 +30,7 @@
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 static char const * const TAG = "display_task";
+display_task_ipc_t * _ipc;
 
 typedef struct {
     time_t start, stop;
@@ -192,10 +193,20 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
-        ESP_LOGI(TAG, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
+        char str[140];
+        snprintf(str, sizeof(str), "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                  stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
                  startPxl, stopPxl);
+        //ESP_LOGI(TAG, str);
+        toMqttMsg_t msg = {
+            .dataType = TO_MQTT_MSGTYPE_DATA,
+            .data = strdup(str)
+        };
+        if (xQueueSendToBack(_ipc->toMqttQ, &msg, 0) != pdPASS) {
+            ESP_LOGE(TAG, "toMqttQ full");
+            free(msg.data);
+        }
 #endif
         for (uint pp = startPxl; pp < stopPxl; pp++) {
             uint const minBrightness = 1;
@@ -214,7 +225,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
 void
 display_task(void * ipc_void)
 {
-    display_task_ipc_t * ipc = ipc_void;
+    _ipc = ipc_void;
 
     // install ws2812 driver
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_CLOCK_WS2812_PIN, RMT_CHANNEL_0);
@@ -236,7 +247,7 @@ display_task(void * ipc_void)
         // if there was an calendar update then apply it
 
         toDisplayMsg_t msg;
-        if (xQueueReceive(ipc->toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
+        if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
             len = _parseJson(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg.data);
             ESP_LOGI(TAG, "Update");

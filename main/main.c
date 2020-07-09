@@ -202,6 +202,7 @@ app_main()
 
     static display_task_ipc_t display_task_ipc;
     display_task_ipc.toDisplayQ = toDisplayQ;
+    display_task_ipc.toMqttQ = toMqttQ;
     xTaskCreate(&display_task, "display_task", 4096, &display_task_ipc, 5, NULL);
 
     static https_client_task_ipc_t https_client_task_ipc;
@@ -213,5 +214,5 @@ app_main()
     static mqtt_client_task_ipc_t mqtt_client_task_ipc;
     mqtt_client_task_ipc.toClientQ = toClientQ;
     mqtt_client_task_ipc.toMqttQ = toMqttQ;
-    xTaskCreate(&mqtt_client_task, "mqtt_client_task", 2*4096, &mqtt_client_task_ipc, 5, NULL);
+    xTaskCreate(&mqtt_client_task, "mqtt_mqtt_task", 2*4096, &mqtt_client_task_ipc, 5, NULL);
 }
