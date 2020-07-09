@@ -193,16 +193,16 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
-        char str[140];
-        snprintf(str, sizeof(str), "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
+        uint const data_len = 140;
+        toMqttMsg_t msg = {
+            .dataType = TO_MQTT_MSGTYPE_DATA,
+            .data = malloc(str_len)
+        };
+        snprintf(msg.data, data_len, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                  stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
                  startPxl, stopPxl);
-        //ESP_LOGI(TAG, str);
-        toMqttMsg_t msg = {
-            .dataType = TO_MQTT_MSGTYPE_DATA,
-            .data = strdup(str)
-        };
+        //ESP_LOGI(TAG, "%s", str);
         if (xQueueSendToBack(_ipc->toMqttQ, &msg, 0) != pdPASS) {
             ESP_LOGE(TAG, "toMqttQ full");
             free(msg.data);
