@@ -196,7 +196,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const data_len = 140;
         toMqttMsg_t msg = {
             .dataType = TO_MQTT_MSGTYPE_DATA,
-            .data = malloc(str_len)
+            .data = malloc(data_len)
         };
         snprintf(msg.data, data_len, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,

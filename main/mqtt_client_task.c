@@ -90,15 +90,15 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                     wifi_ap_record_t ap_info;
                     esp_wifi_sta_get_ap_info(&ap_info);
 
-                    char * format = "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d } }";
-                    uint const wiggleRoom = 32;
+                    char * format = "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d }, \"mem\": { \"heap\": %u } }";
+                    uint const wiggleRoom = 40;
                     uint const payloadLen = strlen(format) + WIFI_DEVNAME_LEN + WIFI_DEVIPADDR_LEN + ARRAYSIZE(running_app_info.project_name) + ARRAYSIZE(running_app_info.version) + ARRAYSIZE(running_app_info.date) + ARRAYSIZE(running_app_info.time) + ARRAYSIZE(ap_info.ssid) + 3 + wiggleRoom;
                     char * const payload = malloc(payloadLen);
 
                     snprintf(payload, payloadLen, format, _devName, _devIPAddr,
                              running_app_info.project_name, running_app_info.version,
                              running_app_info.date, running_app_info.time,
-                             ap_info.ssid, ap_info.rssi);
+                             ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
                     esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
                     free(payload);
