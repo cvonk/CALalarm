@@ -166,7 +166,7 @@ _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t 
 }
 
 static void
-_showEventOnClock(event_t const * const event, time_t const now, uint * const hue, led_strip_t * const strip)
+_addEventToStrip(event_t const * const event, time_t const now, uint * const hue, led_strip_t * const strip)
 {
     struct tm nowTm;
     localtime_r(&now, &nowTm);
@@ -215,7 +215,6 @@ void
 display_task(void * ipc_void)
 {
     display_task_ipc_t * ipc = ipc_void;
-    QueueHandle_t toDisplayQ = ipc->toDisplayQ;
 
     // install ws2812 driver
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_CLOCK_WS2812_PIN, RMT_CHANNEL_0);
@@ -229,8 +228,6 @@ display_task(void * ipc_void)
     event_t * const events = (event_t *)malloc(sizeof(events_t));
     if (!events) { ESP_LOGE(TAG, "No memory for events"); return; }
 
-    ESP_ERROR_CHECK(strip->clear(strip, 100));  // turn off all LEDs
-
     uint len = 0;
     time_t now;
     time_t const loopInMsec = 10000UL;  // how often the while-loop runs [msec]
@@ -239,7 +236,7 @@ display_task(void * ipc_void)
         // if there was an calendar update then apply it
 
         toDisplayMsg_t msg;
-        if (xQueueReceive(toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
+        if (xQueueReceive(ipc->toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
             len = _parseJson(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg.data);
             ESP_LOGI(TAG, "Update");
@@ -253,8 +250,9 @@ display_task(void * ipc_void)
 
         uint hue = 0;
         event_t const * event = events;
+        ESP_ERROR_CHECK(strip->clear(strip, 100));  // turn off all LEDs
         for (uint ee = 0; ee < len; ee++, event++) {
-            _showEventOnClock(event, now, &hue, strip);
+            _addEventToStrip(event, now, &hue, strip);
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
     }
