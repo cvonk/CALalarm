@@ -26,6 +26,7 @@
 #include <lwip/sys.h>
 #include <lwip/netdb.h>
 #include <lwip/dns.h>
+#include <cJSON.h>
 
 #include "https_client_task.h"
 #include "ipc_msgs.h"
@@ -60,15 +61,40 @@ _http_event_handle(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+static void
+_parseJson(char const * const serializedJson, char * const query, uint const query_len)
+{
+    cJSON * const jsonRoot = cJSON_Parse(serializedJson);
+    if (jsonRoot->type != cJSON_Object) {
+        ESP_LOGE(TAG, "JSON root is not an Object");
+        return;
+    }
+    cJSON const *const jsonTime = cJSON_GetObjectItem(jsonRoot, "pushId");
+    if (!jsonTime || jsonTime->type != cJSON_String) {
+        ESP_LOGE(TAG, "JSON.time is missing or not an String");
+        return;
+    }
+    char * const queryVal = strchr(query, '=') + 1;
+    uint const queryVal_len = query_len - (queryVal - query);
+    strncpy(queryVal, jsonTime->valuestring, queryVal_len);
+    cJSON_Delete(jsonRoot);
+}
+
 void
 https_client_task(void * ipc_void)
 {
     ipc_t * const ipc = ipc_void;
 
+    // place to store the "Push Resource Id" returned by the GAS.  in the next request, the GAS uses this to cancel the old push notification
+    uint query_len = 64;
+    char * const query = malloc(query_len);
+    strcpy(query, "pushId=");
+
     while (1) {
 
         esp_http_client_config_t config = {
             .url = CONFIG_CLOCK_GAS_CALENDAR_URL,
+            .query = query,
             .event_handler = _http_event_handle,
             .buffer_size = 2048, // big enough so "Location:" in the header doesn't get split over 2 chunks
         };
@@ -82,9 +108,11 @@ https_client_task(void * ipc_void)
             // content_length returns -1 to indicate the data arrived chunked, instead use the data_len that we stored
             ESP_LOGI(TAG, "status = %d, _data_len = %d", status, _data_len);
             if (status == 200) {
-
                 _data[_data_len] = '\0';
-                ESP_LOGI(TAG, "body = \"%.*s\"", _data_len, _data);
+                ESP_LOGI(TAG, "\"%.*s\"", _data_len, _data);
+
+                _parseJson(_data, query, query_len);
+                ESP_LOGI(TAG, "query = \"%s\"", query);
 
                 sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
                 sendToMqtt(TO_MQTT_MSGTYPE_DATA, _data, ipc);
