@@ -26,9 +26,6 @@
 #define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
 #define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
 
-static char const * _devIPAddr = "";
-static char const * _devName = "";
-
 static char const * const TAG = "mqtt_client_task";
 static ipc_t const * _ipc = NULL;
 
@@ -100,8 +97,9 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                     uint const wiggleRoom = 40;
                     uint const payloadLen = strlen(format) + WIFI_DEVNAME_LEN + WIFI_DEVIPADDR_LEN + ARRAYSIZE(running_app_info.project_name) + ARRAYSIZE(running_app_info.version) + ARRAYSIZE(running_app_info.date) + ARRAYSIZE(running_app_info.time) + ARRAYSIZE(ap_info.ssid) + 3 + wiggleRoom;
                     char * const payload = malloc(payloadLen);
+                    // 2BD: use the GNU asprintf()
 
-                    snprintf(payload, payloadLen, format, _devName, _devIPAddr,
+                    snprintf(payload, payloadLen, format, _ipc->dev.name, _ipc->dev.ipAddr,
                              running_app_info.project_name, running_app_info.version,
                              running_app_info.date, running_app_info.time,
                              ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT));
@@ -145,27 +143,19 @@ mqtt_task(void * ipc) {
 	_ipc = ipc;
 	_mqttEventGrp = xEventGroupCreate();
 
-    ESP_LOGW(TAG, "%p %p", _ipc, _ipc->toMqttQ);
+    _topic.data     = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
+    _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
+    _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
+    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _ipc->dev.name);  // sent msgs
+    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _ipc->dev.name);  // received device specific ctrl msg
+    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);          // received group ctrl msg
+    _connect2broker();
 
 	while (1) {
         toMqttMsg_t msg;
 		if (xQueueReceive(_ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-            ESP_LOGI(TAG, "dataType = %u, data = \"%s\"", msg.dataType, msg.data);
             switch (msg.dataType) {
-                case TO_MQTT_MSGTYPE_DEVIPADDR:
-                    _devIPAddr = strdup(msg.data);
-                    break;
-                case TO_MQTT_MSGTYPE_DEVNAME:
-                    _devName = strdup(msg.data);
-                    _topic.data     = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_devName) + 1);
-                    _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_devName) + 1);
-                    _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
-                    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _devName);  // sent msgs
-                    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _devName);  // received device specific ctrl msg
-                    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);          // received group ctrl msg
-                 	_connect2broker();
-                    break;
                 case TO_MQTT_MSGTYPE_DATA:
         			esp_mqtt_client_publish(_client, _topic.data, msg.data, strlen(msg.data), 1, 0);
                     break;

@@ -53,11 +53,15 @@ _httpdPushHandler(httpd_req_t * req)
         }
         len += received;
     }
-    buf[req->content_len] = '\0';
-    ESP_LOGI(TAG, "body = \"%.*s\"", req->content_len, buf);
+    if (req->content_len) {
+        buf[req->content_len] = '\0';
+        ESP_LOGI(TAG, "body = \"%.*s\"", req->content_len, buf);
 
-    sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
-    sendToMqtt(TO_MQTT_MSGTYPE_DATA, "{ \"response\": \"pushed by Google\" }", ipc);
+        sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
+        sendToMqtt(TO_MQTT_MSGTYPE_DATA, "{ \"response\": \"pushed by Google\" }", ipc);
+    } else {
+        ESP_LOGI(TAG, "sync");  // sync is just an ACK of the push
+    }
     free(buf);
 
     httpd_resp_sendstr(req, "thank you");

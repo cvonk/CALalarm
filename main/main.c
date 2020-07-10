@@ -42,11 +42,9 @@ typedef enum {
 } my_wifi_event_t;
 
 typedef struct event_handler_arg_t {
-    ipc_t const * const ipc;
+    ipc_t * ipc;
     httpd_handle_t server;
 } event_handler_arg_t;
-
-static char _devIPAddr[WIFI_DEVIPADDR_LEN];
 
 static void
 _initNvsFlash(void)
@@ -78,6 +76,7 @@ _wifiDisconnectHandler(void * arg_void, esp_event_base_t event_base, int32_t eve
         http_post_server_stop(arg->server);
         arg->server = NULL;
     }
+    vTaskDelay(10000L / portTICK_PERIOD_MS);
     esp_wifi_connect();
 }
 
@@ -85,12 +84,14 @@ static void
 _wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event_id, void * event_data)
 {
     ESP_LOGI(TAG, "Connected to WiFi");
-    event_handler_arg_t * arg = arg_void;
+    event_handler_arg_t * const arg = arg_void;
+
     xEventGroupSetBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
 
+    ipc_t * const ipc = arg->ipc;
     ip_event_got_ip_t const * const event = (ip_event_got_ip_t *) event_data;
-    snprintf(_devIPAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(&event->ip_info.ip));
-    ESP_LOGI(TAG, "IP addr = %s", _devIPAddr);
+    snprintf(ipc->dev.ipAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(&event->ip_info.ip));
+    ESP_LOGI(TAG, "IP addr = %s", ipc->dev.ipAddr);
 
     if (!arg->server) {
         ESP_LOGI(TAG, "Starting webserver");
@@ -100,7 +101,7 @@ _wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event
 }
 
 static void
-_connect2wifi(ipc_t const * const ipc)
+_connect2wifi(ipc_t * const ipc)
 {
     _wifi_event_group = xEventGroupCreate();
 
@@ -171,14 +172,11 @@ app_main()
 
     _connect2wifi(&ipc);  // waits for connection established
 
-    // first messages to toMqttQ are the IP address and device name
-
     uint8_t mac[WIFI_DEVMAC_LEN];
     esp_base_mac_addr_get(mac);
-	char devName[WIFI_DEVNAME_LEN];
-	_mac2devname(mac, devName, WIFI_DEVNAME_LEN);
-    sendToMqtt(TO_MQTT_MSGTYPE_DEVIPADDR, _devIPAddr, &ipc);
-    sendToMqtt(TO_MQTT_MSGTYPE_DEVNAME, devName, &ipc);
+    ESP_LOGI(TAG, "MAC = %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5] );
+
+	_mac2devname(mac, ipc.dev.name, WIFI_DEVNAME_LEN);
 
     // from here the tasks take over
 

@@ -62,21 +62,21 @@ _http_event_handle(esp_http_client_event_t *evt)
 }
 
 static void
-_parseJson(char const * const serializedJson, char * const query, uint const query_len)
+_parseJson(char const * const serializedJson, char * const pushId, uint const pushId_len)
 {
+    *pushId = '\0';
+
     cJSON * const jsonRoot = cJSON_Parse(serializedJson);
     if (jsonRoot->type != cJSON_Object) {
         ESP_LOGE(TAG, "JSON root is not an Object");
         return;
     }
-    cJSON const *const jsonTime = cJSON_GetObjectItem(jsonRoot, "pushId");
-    if (!jsonTime || jsonTime->type != cJSON_String) {
-        ESP_LOGE(TAG, "JSON.time is missing or not an String");
+    cJSON const *const jsonPushId = cJSON_GetObjectItem(jsonRoot, "pushId");
+    if (!jsonPushId || jsonPushId->type != cJSON_String) {
+        ESP_LOGE(TAG, "JSON.pushId is missing or not an String");
         return;
     }
-    char * const queryVal = strchr(query, '=') + 1;
-    uint const queryVal_len = query_len - (queryVal - query);
-    strncpy(queryVal, jsonTime->valuestring, queryVal_len);
+    strncpy(pushId, jsonPushId->valuestring, pushId_len);
     cJSON_Delete(jsonRoot);
 }
 
@@ -85,39 +85,35 @@ https_client_task(void * ipc_void)
 {
     ipc_t * const ipc = ipc_void;
 
-    // place to store the "Push Resource Id" returned by the GAS.  in the next request, the GAS uses this to cancel the old push notification
-    uint query_len = 64;
-    char * const query = malloc(query_len);
-    strcpy(query, "pushId=");
+    uint const pushId_len = 64;
+    char * const pushId = malloc(pushId_len);
+    *pushId = '\0';
 
     while (1) {
 
+        char * url;
+        asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId);
+        ESP_LOGI(TAG, "url = \"%s\"", url);
+
         esp_http_client_config_t config = {
-            .url = CONFIG_CLOCK_GAS_CALENDAR_URL,
-            .query = query,
+            .url = url,
             .event_handler = _http_event_handle,
             .buffer_size = 2048, // big enough so "Location:" in the header doesn't get split over 2 chunks
         };
         esp_http_client_handle_t client = esp_http_client_init(&config);
 
-        esp_err_t err = esp_http_client_perform(client);
-
-        if (err == ESP_OK) {
+        if (esp_http_client_perform(client) == ESP_OK) {
             int const status = esp_http_client_get_status_code(client);
-
             // content_length returns -1 to indicate the data arrived chunked, instead use the data_len that we stored
             ESP_LOGI(TAG, "status = %d, _data_len = %d", status, _data_len);
             if (status == 200) {
                 _data[_data_len] = '\0';
-                ESP_LOGI(TAG, "\"%.*s\"", _data_len, _data);
-
-                _parseJson(_data, query, query_len);
-                ESP_LOGI(TAG, "query = \"%s\"", query);
-
+                _parseJson(_data, pushId, pushId_len);
                 sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
                 sendToMqtt(TO_MQTT_MSGTYPE_DATA, _data, ipc);
             }
         }
+        free(url);
         esp_http_client_cleanup(client);
 
         toClientMsg_t msg;
