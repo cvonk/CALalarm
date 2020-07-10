@@ -62,9 +62,13 @@ _http_event_handle(esp_http_client_event_t *evt)
 }
 
 static void
-_parseJson(char const * const serializedJson, char * const pushId, uint const pushId_len)
+_json2pushId(char const * const serializedJson, char * const pushId, uint const pushId_len)
 {
     *pushId = '\0';
+    if (serializedJson[0] != '{' || serializedJson[strlen(serializedJson)-1] != '}') {
+        ESP_LOGW(TAG, "first/last JSON chr ('%c' '%c'", serializedJson[0], serializedJson[strlen(serializedJson)-1]);
+        return;
+    }
 
     cJSON * const jsonRoot = cJSON_Parse(serializedJson);
     if (jsonRoot->type != cJSON_Object) {
@@ -73,7 +77,7 @@ _parseJson(char const * const serializedJson, char * const pushId, uint const pu
     }
     cJSON const *const jsonPushId = cJSON_GetObjectItem(jsonRoot, "pushId");
     if (!jsonPushId || jsonPushId->type != cJSON_String) {
-        ESP_LOGE(TAG, "JSON.pushId is missing or not an String");
+        ESP_LOGW(TAG, "JSON.pushId is missing or not an string");
         return;
     }
     strncpy(pushId, jsonPushId->valuestring, pushId_len);
@@ -108,16 +112,19 @@ https_client_task(void * ipc_void)
             ESP_LOGI(TAG, "status = %d, _data_len = %d", status, _data_len);
             if (status == 200) {
                 _data[_data_len] = '\0';
-                _parseJson(_data, pushId, pushId_len);
-                sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
+                ESP_LOGI(TAG, "\"%s\"", _data);
                 sendToMqtt(TO_MQTT_MSGTYPE_DATA, _data, ipc);
+                sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
+                _json2pushId(_data, pushId, pushId_len);
             }
         }
         free(url);
         esp_http_client_cleanup(client);
 
+        bool const pushActive = strlen(pushId);
+        uint const waitMinutes = pushActive ? CONFIG_CLOCK_GAS_INTERVAL : 1;
         toClientMsg_t msg;
-        if (xQueueReceive(ipc->toClientQ, &msg, CONFIG_CLOCK_GAS_INTERVAL * 60000L / portTICK_PERIOD_MS) == pdPASS) {
+        if (xQueueReceive(ipc->toClientQ, &msg, waitMinutes * 60000L / portTICK_PERIOD_MS) == pdPASS) {
             free(msg.data);
         }
     }

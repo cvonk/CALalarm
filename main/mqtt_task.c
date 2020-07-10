@@ -26,7 +26,7 @@
 #define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
 #define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
 
-static char const * const TAG = "mqtt_client_task";
+static char const * const TAG = "mqtt_task";
 static ipc_t const * _ipc = NULL;
 
 static EventGroupHandle_t _mqttEventGrp = NULL;
@@ -93,18 +93,15 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                     wifi_ap_record_t ap_info;
                     esp_wifi_sta_get_ap_info(&ap_info);
 
-                    char * format = "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d }, \"mem\": { \"heap\": %u } }";
-                    uint const wiggleRoom = 40;
-                    uint const payloadLen = strlen(format) + WIFI_DEVNAME_LEN + WIFI_DEVIPADDR_LEN + ARRAYSIZE(running_app_info.project_name) + ARRAYSIZE(running_app_info.version) + ARRAYSIZE(running_app_info.date) + ARRAYSIZE(running_app_info.time) + ARRAYSIZE(ap_info.ssid) + 3 + wiggleRoom;
-                    char * const payload = malloc(payloadLen);
-                    // 2BD: use the GNU asprintf()
-
-                    snprintf(payload, payloadLen, format, _ipc->dev.name, _ipc->dev.ipAddr,
-                             running_app_info.project_name, running_app_info.version,
-                             running_app_info.date, running_app_info.time,
-                             ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT));
-
-                    esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
+                    char * payload;
+                    uint const payload_len = asprintf(&payload,
+                        "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d }, \"mem\": { \"heap\": %u } }",
+                        _ipc->dev.name, _ipc->dev.ipAddr,
+                        running_app_info.project_name, running_app_info.version,
+                        running_app_info.date, running_app_info.time,
+                        ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT)
+                    );
+                    esp_mqtt_client_publish(event->client, _topic.data, payload, payload_len, 1, 0);
                     free(payload);
                 }
             }
@@ -132,8 +129,8 @@ _connect2broker(void) {
     esp_mqtt_client_subscribe(_client, _topic.ctrl, 1);
     esp_mqtt_client_subscribe(_client, _topic.ctrlGroup, 1);
 	ESP_LOGI(TAG, "Connected to MQTT Broker");
+    ESP_LOGI(TAG, " publishing to \"%s\"", _topic.data);
     ESP_LOGI(TAG, " subscribed to \"%s\", \"%s\"", _topic.ctrl, _topic.ctrlGroup);
-    ESP_LOGI(TAG, " pubishing to \"%s\"", _topic.data);
 }
 
 void
@@ -141,26 +138,26 @@ mqtt_task(void * ipc) {
 
     ESP_LOGI(TAG, "%s starting ..", __func__);
 	_ipc = ipc;
-	_mqttEventGrp = xEventGroupCreate();
 
-    _topic.data     = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
+    _topic.data      = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
     _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
     _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
-    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _ipc->dev.name);  // sent msgs
-    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _ipc->dev.name);  // received device specific ctrl msg
-    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);          // received group ctrl msg
+    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _ipc->dev.name);
+    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _ipc->dev.name);
+    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);
+
+	_mqttEventGrp = xEventGroupCreate();
     _connect2broker();
 
 	while (1) {
         toMqttMsg_t msg;
 		if (xQueueReceive(_ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
-
             switch (msg.dataType) {
                 case TO_MQTT_MSGTYPE_DATA:
         			esp_mqtt_client_publish(_client, _topic.data, msg.data, strlen(msg.data), 1, 0);
                     break;
-           }
-			free(msg.data);
+            }
+            free(msg.data);
 		}
 	}
 }

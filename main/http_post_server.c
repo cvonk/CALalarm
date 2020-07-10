@@ -40,7 +40,7 @@ _httpdPushHandler(httpd_req_t * req)
         return ESP_FAIL;
     }
     // +1 so even for no content body, we have a buf
-    char * const buf = malloc(req->content_len +1);  // https_client_task reads from Q and frees mem
+    char * const buf = malloc(req->content_len + 1);  // https_client_task reads from Q and frees mem
     if (!buf) {
         ESP_LOGE(TAG, "No mem");
     }
@@ -53,17 +53,20 @@ _httpdPushHandler(httpd_req_t * req)
         }
         len += received;
     }
-    if (req->content_len) {
+    uint const grs_len = 10;
+    char grs[grs_len];
+    bool const pushAck = httpd_req_get_hdr_value_str(req, "X-Goog-Resource-State", grs, grs_len) == ESP_OK && strcmp(grs, "sync") == 0;
+    if (pushAck) {
+        //ESP_LOGI(TAG, "ignoring push ack");
+    } else {
         buf[req->content_len] = '\0';
-        ESP_LOGI(TAG, "body = \"%.*s\"", req->content_len, buf);
+        ESP_LOGI(TAG, "Google push notification");
 
         sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
         sendToMqtt(TO_MQTT_MSGTYPE_DATA, "{ \"response\": \"pushed by Google\" }", ipc);
-    } else {
-        ESP_LOGI(TAG, "sync");  // sync is just an ACK of the push
+
     }
     free(buf);
-
     httpd_resp_sendstr(req, "thank you");
     return ESP_OK;
 }

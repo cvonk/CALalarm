@@ -87,10 +87,13 @@ _getTime(time_t * time_)
 }
 
 static uint
-_parseJson(char const * const serializedJson, time_t * const time, events_t events)
+_json2events(char const * const serializedJson, time_t * const time, events_t events)
 {
     uint len = 0;
-
+    if (serializedJson[0] != '{' || serializedJson[strlen(serializedJson)-1] != '}') {
+        ESP_LOGW(TAG, "first/last JSON chr ('%c' '%c'", serializedJson[0], serializedJson[strlen(serializedJson)-1]);
+        return len;
+    }
     cJSON * const jsonRoot = cJSON_Parse(serializedJson);
     if (jsonRoot->type != cJSON_Object) {
         ESP_LOGE(TAG, "JSON root is not an Object");
@@ -206,13 +209,12 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
-        uint const data_len = 140;
-        char * const data = malloc(data_len);
-        uint len = snprintf(data, data_len, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
-                 startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
-                 stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
-                 startPxl, stopPxl);
-        ESP_LOGI(TAG, "\"%s\" (%u)", data, len);
+        char * data;
+        uint data_len = asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
+                                 startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
+                                 stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
+                                 startPxl, stopPxl);
+        ESP_LOGI(TAG, "\"%s\"", data);
         sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);   // appears to crash things ..
         free(data);
 #endif
@@ -245,23 +247,23 @@ display_task(void * ipc_void)
     if (!strip) { ESP_LOGE(TAG, "Can't install WS2812 driver"); return; }
 
     event_t * const events = (event_t *)malloc(sizeof(events_t));
-    if (!events) { ESP_LOGE(TAG, "No memory for events"); return; }
+    if (!events) { ESP_LOGE(TAG, "No mem"); return; }
 
     uint len = 0;
     time_t now;
-    time_t const loopInMsec = 10000UL;  // how often the while-loop runs [msec]
+    time_t const loopInSec = 60;  // how often the while-loop runs [msec]
     while (1) {
 
         // if there was an calendar update then apply it
 
         toDisplayMsg_t msg;
-        if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInMsec / portTICK_PERIOD_MS)) == pdPASS) {
-            len = _parseJson(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
+        if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInSec * 1000 / portTICK_PERIOD_MS)) == pdPASS) {
+            len = _json2events(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg.data);
             ESP_LOGI(TAG, "Update");
             _setTime(now); // update out time-of-day
         } else {
-            ESP_LOGI(TAG, "No update");
+            //ESP_LOGI(TAG, "No update");
             _getTime(&now);
         }
 
