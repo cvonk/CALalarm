@@ -82,7 +82,7 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
                 } else if (strncmp("push", event->data, event->data_len) == 0) {
 
-                    char const * const payload = "{ \"response\": \"pushed my MQTT\" }";
+                    char const * const payload = "{ \"response\": \"pushed by MQTT\" }";
                     esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
 
                     sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, "mqtt push", _ipc);
