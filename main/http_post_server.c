@@ -30,14 +30,10 @@
 
 static const char * TAG = "https_server_task";
 
-typedef struct server_context_t {
-    QueueHandle_t toClientQ;
-} server_context_t;
-
 esp_err_t
 _httpdPushHandler(httpd_req_t * req)
 {
-    server_context_t * const context = (server_context_t *)req->user_ctx;
+    ipc_t const * const ipc = req->user_ctx;
 
     if (req->content_len >= MAX_CONTENT_LEN) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Content too long");
@@ -60,16 +56,10 @@ _httpdPushHandler(httpd_req_t * req)
     buf[req->content_len] = '\0';
     ESP_LOGI(TAG, "body = \"%.*s\"", req->content_len, buf);
 
-    // trigger https_client_task
+    sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
+    sendToMqtt(TO_MQTT_MSGTYPE_DATA, "{ \"response\": \"pushed by Google\" }", ipc);
+    free(buf);
 
-    toClientMsg_t msg = {
-        .dataType = TO_CLIENT_MSGTYPE_TRIGGER,
-        .data = buf
-    };
-    if (xQueueSendToBack(context->toClientQ, &msg, 0) != pdPASS) {
-        ESP_LOGW(TAG, "Queue full");
-        free(msg.data);
-    }
     httpd_resp_sendstr(req, "thank you");
     return ESP_OK;
 }
@@ -81,12 +71,8 @@ http_post_server_stop(httpd_handle_t server)
 }
 
 httpd_handle_t
-http_post_server_start(void * ipc_void)
+http_post_server_start(ipc_t const * const ipc)
 {
-    http_post_server_ipc_t * ipc = ipc_void;  // store for when we have something to sent
-    static server_context_t context;
-    context.toClientQ = ipc->toClientQ;
-
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
@@ -101,7 +87,7 @@ http_post_server_start(void * ipc_void)
         .uri = "/api/push",
         .method = HTTP_POST,
         .handler = _httpdPushHandler,
-        .user_ctx = &context
+        .user_ctx = (void *)ipc
     };
     httpd_register_uri_handler(server, &httpd_push_uri);
     return server;

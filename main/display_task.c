@@ -30,7 +30,7 @@
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 static char const * const TAG = "display_task";
-display_task_ipc_t * _ipc;
+static ipc_t * _ipc;
 
 typedef struct {
     time_t start, stop;
@@ -38,6 +38,19 @@ typedef struct {
 
 enum MAX_EVENTS { MAX_EVENTS = 30 };
 typedef event_t events_t[MAX_EVENTS];
+
+void
+sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t const * const ipc)
+{
+    toDisplayMsg_t msg = {
+        .dataType = dataType,
+        .data = strdup(data)
+    };
+    if (xQueueSendToBack(ipc->toDisplayQ, &msg, 0) != pdPASS) {
+        ESP_LOGE(TAG, "toDisplayQ full");
+        free(msg.data);
+    }
+}
 
 static time_t
 _str2time(char * str) {  // e.g. 2020-06-25T22:30:16.329Z
@@ -194,19 +207,14 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
         uint const data_len = 140;
-        toMqttMsg_t msg = {
-            .dataType = TO_MQTT_MSGTYPE_DATA,
-            .data = malloc(data_len)
-        };
-        snprintf(msg.data, data_len, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
+        char * const data = malloc(data_len);
+        uint len = snprintf(data, data_len, "event = %04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => pxl = %2u to %2u",
                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                  stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
                  startPxl, stopPxl);
-        //ESP_LOGI(TAG, "%s", str);
-        if (xQueueSendToBack(_ipc->toMqttQ, &msg, 0) != pdPASS) {
-            ESP_LOGE(TAG, "toMqttQ full");
-            free(msg.data);
-        }
+        ESP_LOGI(TAG, "\"%s\" (%u)", data, len);
+        sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);   // appears to crash things ..
+        free(data);
 #endif
         for (uint pp = startPxl; pp < stopPxl; pp++) {
             uint const minBrightness = 1;

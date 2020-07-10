@@ -1,7 +1,12 @@
 #pragma once
 
+typedef struct ipc_t {
+    QueueHandle_t toClientQ;
+    QueueHandle_t toDisplayQ;
+    QueueHandle_t toMqttQ;
+} ipc_t;
+
 typedef enum toMqttMsgType_t {
-    TO_MQTT_MSGTYPE_CTRL,
     TO_MQTT_MSGTYPE_DATA,
     TO_MQTT_MSGTYPE_DEVIPADDR,
     TO_MQTT_MSGTYPE_DEVNAME,
@@ -42,3 +47,7 @@ typedef struct toClientMsg_t {
 #define WIFI_DEVMAC_LEN (6)
 #define WIFI_DEVNAME_LEN (32)
 #define WIFI_DEVIPADDR_LEN (16)
+
+void sendToClient(toClientMsgType_t const dataType, char const * const data, ipc_t const * const ipc);
+void sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t const * const ipc);
+void sendToMqtt(toMqttMsgType_t const dataType, char const * const data, ipc_t const * const ipc);

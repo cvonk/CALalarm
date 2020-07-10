@@ -34,6 +34,19 @@ static const char * TAG = "https_client_task";
 static char * _data = NULL;
 static int _data_len = 0;
 
+void
+sendToClient(toClientMsgType_t const dataType, char const * const data, ipc_t const * const ipc)
+{
+    toClientMsg_t msg = {
+        .dataType = dataType,
+        .data = strdup(data)
+    };
+    if (xQueueSendToBack(ipc->toClientQ, &msg, 0) != pdPASS) {
+        ESP_LOGE(TAG, "toClientQ full");
+        free(msg.data);
+    }
+}
+
 esp_err_t
 _http_event_handle(esp_http_client_event_t *evt)
 {
@@ -50,7 +63,7 @@ _http_event_handle(esp_http_client_event_t *evt)
 void
 https_client_task(void * ipc_void)
 {
-    https_client_task_ipc_t * const ipc = ipc_void;
+    ipc_t * const ipc = ipc_void;
 
     while (1) {
 
@@ -73,26 +86,8 @@ https_client_task(void * ipc_void)
                 _data[_data_len] = '\0';
                 ESP_LOGI(TAG, "body = \"%.*s\"", _data_len, _data);
 
-                {
-                    toDisplayMsg_t msg = {
-                        .dataType = TO_DISPLAY_MSGTYPE_JSON,
-                        .data = strdup(_data)
-                    };
-                    if (xQueueSendToBack(ipc->toDisplayQ, &msg, 0) != pdPASS) {
-                        ESP_LOGW(TAG, "Queue full");
-                        free(msg.data);
-                    }
-                }
-                {   // send a copy to MQTT broker
-                    toMqttMsg_t msg = {
-                        .dataType = TO_MQTT_MSGTYPE_DATA,
-                        .data = strdup(_data)
-                    };
-                    if (xQueueSendToBack(ipc->toMqttQ, &msg, 0) != pdPASS) {
-                        ESP_LOGE(TAG, "toMqttQ full");
-                        free(msg.data);
-                    }
-                }
+                sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
+                sendToMqtt(TO_MQTT_MSGTYPE_DATA, _data, ipc);
             }
         }
         esp_http_client_cleanup(client);
@@ -100,7 +95,6 @@ https_client_task(void * ipc_void)
         toClientMsg_t msg;
         if (xQueueReceive(ipc->toClientQ, &msg, CONFIG_CLOCK_GAS_INTERVAL * 60000L / portTICK_PERIOD_MS) == pdPASS) {
             free(msg.data);
-            ESP_LOGI(TAG, "triggered");
         }
     }
 }

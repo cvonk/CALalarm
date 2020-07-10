@@ -18,7 +18,7 @@
 #include <mqtt_client.h>
 #include <esp_ota_ops.h>
 
-#include "mqtt_client_task.h"
+#include "mqtt_task.h"
 #include "ipc_msgs.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -30,7 +30,7 @@ static char const * _devIPAddr = "";
 static char const * _devName = "";
 
 static char const * const TAG = "mqtt_client_task";
-static mqtt_client_task_ipc_t const * _ipc = NULL;
+static ipc_t const * _ipc = NULL;
 
 static EventGroupHandle_t _mqttEventGrp = NULL;
 typedef enum {
@@ -46,6 +46,19 @@ static struct {
 static esp_mqtt_client_handle_t _client;
 
 static void _connect2broker(void);  // forward decl
+
+void
+sendToMqtt(toMqttMsgType_t const dataType, char const * const data, ipc_t const * const ipc)
+{
+    toMqttMsg_t msg = {
+        .dataType = dataType,
+        .data = strdup(data)
+    };
+    if (xQueueSendToBack(ipc->toMqttQ, &msg, 0) != pdPASS) {
+        ESP_LOGE(TAG, "toMqttQ full");
+        free(msg.data);
+    }
+}
 
 static esp_err_t
 _mqttEventHandler(esp_mqtt_event_handle_t event) {
@@ -69,17 +82,10 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
                 } else if (strncmp("push", event->data, event->data_len) == 0) {
 
-                    char const * const payload = "{ \"response\": \"pushing\" }";
+                    char const * const payload = "{ \"response\": \"pushed my MQTT\" }";
                     esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
 
-                    toClientMsg_t msg = {
-                        .dataType = TO_CLIENT_MSGTYPE_TRIGGER,
-                        .data = strdup("mqtt push")
-                    };
-                    if (xQueueSendToBack(_ipc->toClientQ, &msg, 0) != pdPASS) {
-                        ESP_LOGW(TAG, "Queue full");
-                        free(msg.data);
-                    }
+                    sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, "mqtt push", _ipc);
 
                 } else if (strncmp("who", event->data, event->data_len) == 0) {
 
@@ -128,73 +134,40 @@ _connect2broker(void) {
     esp_mqtt_client_subscribe(_client, _topic.ctrl, 1);
     esp_mqtt_client_subscribe(_client, _topic.ctrlGroup, 1);
 	ESP_LOGI(TAG, "Connected to MQTT Broker");
+    ESP_LOGI(TAG, " subscribed to \"%s\", \"%s\"", _topic.ctrl, _topic.ctrlGroup);
+    ESP_LOGI(TAG, " pubishing to \"%s\"", _topic.data);
 }
 
 void
-mqtt_client_task(void * ipc) {
+mqtt_task(void * ipc) {
 
-	_ipc = ipc;
     ESP_LOGI(TAG, "%s starting ..", __func__);
-
-	// first message from _ipc->toMqttQ is the WiFi IP address
-
-	toMqttMsg_t msg;
-	if (xQueueReceive(_ipc->toMqttQ, &msg, (TickType_t)(30000L / portTICK_PERIOD_MS)) == pdPASS) {
-        if (msg.dataType != TO_MQTT_MSGTYPE_DEVIPADDR) {
-            ESP_LOGE(TAG, "unexpected dataType(%d)", msg.dataType);
-            esp_restart();
-        }
-        _devIPAddr = msg.data;
-		// do not free(msg.data) as we keep refering to it
-    } else {
-        ESP_LOGE(TAG, "Didn't receive devIPAddr");
-        esp_restart();
-    }
-
-	// second message from _ipc->toMqttQ is the WiFi Device Name
-
-	if (xQueueReceive(_ipc->toMqttQ, &msg, (TickType_t)(30000L / portTICK_PERIOD_MS)) == pdPASS) {
-
-        if (msg.dataType != TO_MQTT_MSGTYPE_DEVNAME) {
-            ESP_LOGE(TAG, "unexpected dataType(%d)", msg.dataType);
-            esp_restart();
-        }
-		_devName = msg.data;
-        _topic.data     = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_devName) + 1);
-        _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_devName) + 1);
-        _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
-		sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _devName);  // sent msgs
-        sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _devName);  // received device specific ctrl msg
-        sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);          // received group ctrl msg
-        ESP_LOGI(TAG, "%s, %s, %s", _topic.data, _topic.ctrl, _topic.ctrlGroup);
-		// do not free(msg.data) as we keep refering to it
-	} else {
-        ESP_LOGE(TAG, "Didn't receive devName");
-        esp_restart();
-    }
-
-	// connect to MQTT broker, and subcribe to ctrl topic
-
+	_ipc = ipc;
 	_mqttEventGrp = xEventGroupCreate();
-	_connect2broker();
 
-	// all remaining messages from _ipc->toMqttQ are iBeacon scan results formatted as JSON (tx'd by ble_scan_task)
+    ESP_LOGW(TAG, "%p %p", _ipc, _ipc->toMqttQ);
 
 	while (1) {
+        toMqttMsg_t msg;
 		if (xQueueReceive(_ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
+            ESP_LOGI(TAG, "dataType = %u, data = \"%s\"", msg.dataType, msg.data);
             switch (msg.dataType) {
-                case TO_MQTT_MSGTYPE_DATA:
-                    ESP_LOGI(TAG, "data %s \"%s\"", _topic.data, msg.data);
-        			esp_mqtt_client_publish(_client, _topic.data, msg.data, strlen(msg.data), 1, 0);
-                    break;
-                case TO_MQTT_MSGTYPE_CTRL:
-                    ESP_LOGI(TAG, "ctrl %s \"%s\"", _topic.data, msg.data);
-        			esp_mqtt_client_publish(_client, _topic.ctrl, msg.data, strlen(msg.data), 1, 0);
-                    break;
                 case TO_MQTT_MSGTYPE_DEVIPADDR:
+                    _devIPAddr = strdup(msg.data);
+                    break;
                 case TO_MQTT_MSGTYPE_DEVNAME:
-                    ESP_LOGE(TAG, "unexpected dataType(%d)", msg.dataType);
+                    _devName = strdup(msg.data);
+                    _topic.data     = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_devName) + 1);
+                    _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_devName) + 1);
+                    _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
+                    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _devName);  // sent msgs
+                    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _devName);  // received device specific ctrl msg
+                    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);          // received group ctrl msg
+                 	_connect2broker();
+                    break;
+                case TO_MQTT_MSGTYPE_DATA:
+        			esp_mqtt_client_publish(_client, _topic.data, msg.data, strlen(msg.data), 1, 0);
                     break;
            }
 			free(msg.data);

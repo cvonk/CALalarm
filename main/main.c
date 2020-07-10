@@ -27,7 +27,7 @@
 #include "http_post_server.h"
 #include "https_client_task.h"
 #include "display_task.h"
-#include "mqtt_client_task.h"
+#include "mqtt_task.h"
 #include "ipc_msgs.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -41,7 +41,10 @@ typedef enum {
     WIFI_EVENT_CONNECTED = BIT0
 } my_wifi_event_t;
 
-static http_post_server_ipc_t _http_post_server_ipc;
+typedef struct event_handler_arg_t {
+    ipc_t const * const ipc;
+    httpd_handle_t server;
+} event_handler_arg_t;
 
 static char _devIPAddr[WIFI_DEVIPADDR_LEN];
 
@@ -64,40 +67,40 @@ _wifiStaStart(void * arg, esp_event_base_t event_base, int32_t event_id, void* e
 }
 
 static void
-_wifiDisconnectHandler(void * arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
+_wifiDisconnectHandler(void * arg_void, esp_event_base_t event_base, int32_t event_id, void * event_data)
 {
     ESP_LOGI(TAG, "Disconnected from WiFi");
     xEventGroupClearBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
 
-    httpd_handle_t * server = (httpd_handle_t *) arg;
-    if (*server) {
+    event_handler_arg_t * const arg = arg_void;
+    if (arg->server) {
         ESP_LOGI(TAG, "Stopping webserver");
-        http_post_server_stop(*server);
+        http_post_server_stop(arg->server);
+        arg->server = NULL;
     }
     esp_wifi_connect();
 }
 
 static void
-_wifiConnectHandler(void * arg, esp_event_base_t event_base,  int32_t event_id, void * event_data)
+_wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event_id, void * event_data)
 {
     ESP_LOGI(TAG, "Connected to WiFi");
+    event_handler_arg_t * arg = arg_void;
     xEventGroupSetBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
 
     ip_event_got_ip_t const * const event = (ip_event_got_ip_t *) event_data;
     snprintf(_devIPAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(&event->ip_info.ip));
     ESP_LOGI(TAG, "IP addr = %s", _devIPAddr);
 
-    httpd_handle_t * server = (httpd_handle_t*) arg;
-    if (*server == NULL) {
+    if (!arg->server) {
         ESP_LOGI(TAG, "Starting webserver");
-        ESP_LOGI(TAG, "%s ipc = %p", __func__, &_http_post_server_ipc);
-        *server = http_post_server_start(&_http_post_server_ipc);
+        arg->server = http_post_server_start(arg->ipc);
     }
     //pool_mdns_init();
 }
 
 static void
-_connect2wifi(void)
+_connect2wifi(ipc_t const * const ipc)
 {
     _wifi_event_group = xEventGroupCreate();
 
@@ -107,10 +110,13 @@ _connect2wifi(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();  // init WiFi with configuration from non-volatile storage
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    static httpd_handle_t server = NULL;
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_START, &_wifiStaStart, &server));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &_wifiDisconnectHandler, &server));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &_wifiConnectHandler, &server));
+    event_handler_arg_t event_handler_arg = {
+        .ipc = ipc,
+        .server = NULL
+    };
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_START, &_wifiStaStart, &event_handler_arg));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &_wifiDisconnectHandler, &event_handler_arg));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &_wifiConnectHandler, &event_handler_arg));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     if (strlen(CONFIG_WIFI_SSID) && strlen(CONFIG_WIFI_PASSWD)) {
@@ -157,62 +163,27 @@ app_main()
 
     _initNvsFlash();
 
-    QueueHandle_t toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
-    QueueHandle_t toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
-    QueueHandle_t toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
-    if (!toDisplayQ || !toClientQ) esp_restart();
+    static ipc_t ipc;
+    ipc.toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
+    ipc.toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
+    ipc.toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
+    if (!ipc.toDisplayQ || !ipc.toClientQ || !ipc.toMqttQ) esp_restart();
 
-    _http_post_server_ipc.toClientQ = toClientQ;
-    ESP_LOGI(TAG, "%s toClientQ = %p", __func__, toClientQ);
-    // http_post_server is started in response to getting an IP address assigned
+    _connect2wifi(&ipc);  // waits for connection established
 
-    _connect2wifi();  // waits for connection established
-
-    // first message to toMqttQ is the IP address
-
-    {
-        toMqttMsg_t msg = {
-            .dataType = TO_MQTT_MSGTYPE_DEVIPADDR,
-            .data = strdup(_devIPAddr)
-        };
-        if (xQueueSendToBack(toMqttQ, &msg, 0) != pdPASS) {
-            ESP_LOGE(TAG, "toMqttQ full (1st)");  // should never happen, since its the first msg
-            free(msg.data);
-        }
-	}
-
-	// second message to toMqttQ is the device name (rx'ed by mqtt_client_task)
+    // first messages to toMqttQ are the IP address and device name
 
     uint8_t mac[WIFI_DEVMAC_LEN];
     esp_base_mac_addr_get(mac);
 	char devName[WIFI_DEVNAME_LEN];
 	_mac2devname(mac, devName, WIFI_DEVNAME_LEN);
-    {
-        toMqttMsg_t msg = {
-            .dataType = TO_MQTT_MSGTYPE_DEVNAME,
-            .data = strdup(devName)
-        };
-        if (xQueueSendToBack(toMqttQ, &msg, 0) != pdPASS) {
-            ESP_LOGE(TAG, "toMqttQ full (2nd)");  // should never happen, since its the first msg
-            free(msg.data);
-        }
-    }
+    sendToMqtt(TO_MQTT_MSGTYPE_DEVIPADDR, _devIPAddr, &ipc);
+    sendToMqtt(TO_MQTT_MSGTYPE_DEVNAME, devName, &ipc);
+
+    // from here the tasks take over
 
     xTaskCreate(&ota_task, "ota_task", 4096, NULL, 5, NULL);
-
-    static display_task_ipc_t display_task_ipc;
-    display_task_ipc.toDisplayQ = toDisplayQ;
-    display_task_ipc.toMqttQ = toMqttQ;
-    xTaskCreate(&display_task, "display_task", 4096, &display_task_ipc, 5, NULL);
-
-    static https_client_task_ipc_t https_client_task_ipc;
-    https_client_task_ipc.toClientQ = toClientQ;
-    https_client_task_ipc.toDisplayQ = toDisplayQ;
-    https_client_task_ipc.toMqttQ = toMqttQ;
-    xTaskCreate(&https_client_task, "https_client_task", 4096, &https_client_task_ipc, 5, NULL);
-
-    static mqtt_client_task_ipc_t mqtt_client_task_ipc;
-    mqtt_client_task_ipc.toClientQ = toClientQ;
-    mqtt_client_task_ipc.toMqttQ = toMqttQ;
-    xTaskCreate(&mqtt_client_task, "mqtt_mqtt_task", 2*4096, &mqtt_client_task_ipc, 5, NULL);
+    xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
+    xTaskCreate(&https_client_task, "https_client_task", 4096, &ipc, 5, NULL);
+    xTaskCreate(&mqtt_task, "mqtt_task", 2*4096, &ipc, 5, NULL);
 }
