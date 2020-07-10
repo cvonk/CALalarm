@@ -94,13 +94,17 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                     esp_wifi_sta_get_ap_info(&ap_info);
 
                     char * payload;
-                    uint const payload_len = asprintf(&payload,
+                    int const payload_len = asprintf(&payload,
                         "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d }, \"mem\": { \"heap\": %u } }",
                         _ipc->dev.name, _ipc->dev.ipAddr,
                         running_app_info.project_name, running_app_info.version,
                         running_app_info.date, running_app_info.time,
                         ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT)
                     );
+                    if (payload_len < 0) {
+                        ESP_LOGE(TAG, "no mem");
+                        esp_restart();
+                    }
                     esp_mqtt_client_publish(event->client, _topic.data, payload, payload_len, 1, 0);
                     free(payload);
                 }

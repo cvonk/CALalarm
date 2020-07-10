@@ -96,7 +96,10 @@ https_client_task(void * ipc_void)
     while (1) {
 
         char * url;
-        asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId);
+        if (asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) < 0) {
+            ESP_LOGE(TAG, "no mem");
+            esp_restart();
+        }
         ESP_LOGI(TAG, "url = \"%s\"", url);
 
         esp_http_client_config_t config = {

@@ -210,12 +210,15 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
         char * data;
-        uint data_len = asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
+        if (asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
                                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
                                  stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
-                                 startPxl, stopPxl);
+                                 startPxl, stopPxl) < 0) {
+            ESP_LOGE(TAG, "no mem");
+            esp_restart();
+        }
         ESP_LOGI(TAG, "\"%s\"", data);
-        sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);   // appears to crash things ..
+        sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);
         free(data);
 #endif
         for (uint pp = startPxl; pp < stopPxl; pp++) {
