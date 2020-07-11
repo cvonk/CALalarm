@@ -114,9 +114,10 @@ function doGet(e) {
             case CalendarApp.GuestStatus.YES:
             case CalendarApp.GuestStatus.MAYBE:
                 if (!allDayEvent) {
-                    const localStart = new Date(event.getStartTime().getTime() - 25200000);
-                    const localEnd = new Date(event.getEndTime().getTime() - 25200000);
-                    json.events.push({ "start": localStart, "stop": localEnd });
+                    json.events.push({
+                        "start": localTime(event.getStartTime()),
+                        "end": localTime(event.getEndTime())
+                    });
                 }
                 break;
             default:

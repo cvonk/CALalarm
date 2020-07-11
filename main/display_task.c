@@ -33,7 +33,7 @@ static char const * const TAG = "display_task";
 static ipc_t * _ipc;
 
 typedef struct {
-    time_t start, stop;
+    time_t start, end;
 } PACK8 event_t;
 
 enum MAX_EVENTS { MAX_EVENTS = 30 };
@@ -55,7 +55,7 @@ sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t 
 static time_t
 _str2time(char * str) {  // e.g. 2020-06-25T22:30:16.329Z
     struct tm tm;
-    strptime(str, "%Y-%m-%dT%H:%M:%S", &tm);
+    strptime(str, "%Y-%m-%d %H:%M:%S", &tm);
     return mktime(&tm);
 }
 
@@ -66,8 +66,8 @@ event_t * const event )
 {
     if (strcmp(key, "start") == 0) {
         event->start = _str2time(value);
-    } else if (strcmp(key, "stop") == 0) {
-        event->stop = _str2time(value);
+    } else if (strcmp(key, "end") == 0) {
+        event->end = _str2time(value);
     } else {
         ESP_LOGE(TAG, "%s: unrecognized key(%s) ", __func__, key);
     }
@@ -113,7 +113,7 @@ _json2events(char const * const serializedJson, time_t * const time, events_t ev
     }
 
     enum DETAIL_COUNT { DETAIL_COUNT = 2 };
-    static char const * const detailNames[DETAIL_COUNT] = {"start", "stop"};
+    static char const * const detailNames[DETAIL_COUNT] = {"start", "end"};
 
     event_t * event = events;
     for (int ii = 0; ii < cJSON_GetArraySize(jsonEvents) && ii < MAX_EVENTS; ii++, len++) {
@@ -190,15 +190,15 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
 
     //ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
     float const startsInHr = difftime(event->start, now) / 3600;
-    float const stopsInHr = difftime(event->stop, now) / 3600;
+    float const endsInHr = difftime(event->end, now) / 3600;
 #define DEBUG (1)
 #if DEBUG
-    struct tm startTm, stopTm;
+    struct tm startTm, endTm;
     localtime_r(&event->start, &startTm);
-    localtime_r(&event->stop, &stopTm);
+    localtime_r(&event->end, &endTm);
 #endif
     uint const hrsOnClock = 12;
-    bool const alreadyFinished = stopsInHr < 0;
+    bool const alreadyFinished = endsInHr < 0;
     bool const startsWithin12h = startsInHr < hrsOnClock;
 
     if (startsWithin12h && !alreadyFinished) {
@@ -207,13 +207,13 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         float const hrsFromToc = nowTm.tm_hour % hrsOnClock + (float)nowTm.tm_min / 60.0;  // hours from top-of-clock
         uint const nowPxl = round(hrsFromToc * pxlsPerHr);
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
-        uint const stopPxl = round((hrsFromToc + MIN(stopsInHr, hrsOnClock)) * pxlsPerHr);
+        uint const endPxl = round((hrsFromToc + MIN(endsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
         char * data;
         if (asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
                                  startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
-                                 stopTm.tm_year + 1900, stopTm.tm_mon + 1, stopTm.tm_mday, stopTm.tm_hour, stopTm.tm_min, stopsInHr,
-                                 startPxl, stopPxl) < 0) {
+                                 endTm.tm_year + 1900, endTm.tm_mon + 1, endTm.tm_mday, endTm.tm_hour, endTm.tm_min, endsInHr,
+                                 startPxl, endPxl) < 0) {
             ESP_LOGE(TAG, "no mem");
             esp_restart();
         }
@@ -221,7 +221,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);
         free(data);
 #endif
-        for (uint pp = startPxl; pp < stopPxl; pp++) {
+        for (uint pp = startPxl; pp < endPxl; pp++) {
             uint const minBrightness = 1;
             uint const maxBrightness = 50;
             uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
