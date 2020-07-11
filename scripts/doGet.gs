@@ -2,6 +2,12 @@
 //  Platform: Google Apps Script
 //  (c) Copyright 2020, Sander Vonk
 
+var timezone = Session.getScriptTimeZone();
+
+function localTime(t) {
+    return Utilities.formatDate(new Date(), timezone, 'yyyy-MM-dd HH:mm:ss');
+}
+
 function bytesToString(bytes) {
     var str = '';
     for (ii = 0; ii < bytes.length; ii++) {
@@ -21,6 +27,7 @@ function bytesToString(bytes) {
 
 // https://stackoverflow.com/questions/10867405/generating-v5-uuid-what-is-name-and-namespace
 function NameToUUID(NamespaceUUID, Name) {
+
     hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, NamespaceUUID + Name).slice(0, 14);
     hash[6] = (hash[6] & 0x0F) | 0x50;
     hash[8] = (hash[8] & 0x3F) | 0x80;
@@ -28,6 +35,7 @@ function NameToUUID(NamespaceUUID, Name) {
 }
 
 function disablePushNotifications(channelId, resourceId) {
+
     UrlFetchApp.fetch('https://www.googleapis.com/calendar/v3/channels/stop',
         {
             "method": "POST",
@@ -44,6 +52,7 @@ function disablePushNotifications(channelId, resourceId) {
 }
 
 function enablePushNotifications(channeId, email) {
+
     const resp = UrlFetchApp.fetch(
         'https://www.googleapis.com/calendar/v3/calendars/' + email + '/events/watch',
         {
@@ -72,7 +81,10 @@ function enablePushNotifications(channeId, email) {
 
 function doGet(e) {
 
-    const email = 'sander.c.vonk@gmail.com';
+    const email = Session.getEffectiveUser().getEmail();
+
+    Logger.log("local time is", localTime(new Date()));
+
     const Namespace_OID = "{6ba7b812-9dad-11d1-80b4-00c04fd430c8}"
     var channelId = NameToUUID(Namespace_OID, e.parameter.devName);
     Logger.log('channelId =', channelId);
