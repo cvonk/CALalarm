@@ -76,6 +76,7 @@ function enablePushNotifications(channelId, email, duration) {
         }
     );
     if (resp.getResponseCode() != 200) {
+        // "channel id not unique" will dissapear as the channel expires
         Logger.log("enablePushNotifications, error", resp.getResponseCode(), resp.getContentText());
         return NaN;
     }
