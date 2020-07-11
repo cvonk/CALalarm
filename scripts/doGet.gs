@@ -5,7 +5,7 @@
 var timezone = Session.getScriptTimeZone();
 
 function localTime(t) {
-    return Utilities.formatDate(new Date(), timezone, 'yyyy-MM-dd HH:mm:ss');
+    return Utilities.formatDate(t, timezone, 'yyyy-MM-dd HH:mm:ss');
 }
 
 function bytesToString(bytes) {
@@ -72,7 +72,7 @@ function enablePushNotifications(channelId, email, duration) {
                     "ttl": (60 * duration).toString()            // max is 1 hr [sec]
                 }
             }),
-            "muteHttpExceptions": false//true
+            "muteHttpExceptions": true  // false for dbg
         }
     );
     if (resp.getResponseCode() != 200) {

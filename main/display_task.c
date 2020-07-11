@@ -55,7 +55,10 @@ sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t 
 static time_t
 _str2time(char * str) {  // e.g. 2020-06-25T22:30:16.329Z
     struct tm tm;
-    strptime(str, "%Y-%m-%d %H:%M:%S", &tm);
+    if (strptime(str, "%Y-%m-%d %H:%M:%S", &tm) == NULL) {
+        ESP_LOGE(TAG, "can't parse time (%s)", str);
+        return 0;
+    }
     return mktime(&tm);
 }
 
