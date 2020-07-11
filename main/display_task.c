@@ -226,7 +226,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
 #endif
         for (uint pp = startPxl; pp < endPxl; pp++) {
             uint const minBrightness = 1;
-            uint const maxBrightness = 50;
+            uint const maxBrightness = 10;
             uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
             uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
             uint r, g, b;
