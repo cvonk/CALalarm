@@ -51,6 +51,7 @@ sendToMqtt(toMqttMsgType_t const dataType, char const * const data, ipc_t const 
         .dataType = dataType,
         .data = strdup(data)
     };
+    assert(msg.data);
     if (xQueueSendToBack(ipc->toMqttQ, &msg, 0) != pdPASS) {
         ESP_LOGE(TAG, "toMqttQ full");
         free(msg.data);
@@ -88,10 +89,10 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
                     esp_partition_t const * const running_part = esp_ota_get_running_partition();
                     esp_app_desc_t running_app_info;
-                    esp_ota_get_partition_description(running_part, &running_app_info);
+                    ESP_ERROR_CHECK(esp_ota_get_partition_description(running_part, &running_app_info));
 
                     wifi_ap_record_t ap_info;
-                    esp_wifi_sta_get_ap_info(&ap_info);
+                    ESP_ERROR_CHECK(esp_wifi_sta_get_ap_info(&ap_info));
 
                     char * payload;
                     int const payload_len = asprintf(&payload,
@@ -101,10 +102,7 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                         running_app_info.date, running_app_info.time,
                         ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT)
                     );
-                    if (payload_len < 0) {
-                        ESP_LOGE(TAG, "no mem");
-                        esp_restart();
-                    }
+                    assert(payload_len >= 0);
                     esp_mqtt_client_publish(event->client, _topic.data, payload, payload_len, 1, 0);
                     free(payload);
                 }
@@ -124,11 +122,11 @@ _connect2broker(void) {
         const esp_mqtt_client_config_t mqtt_cfg = { .event_handle = _mqttEventHandler };
         _client = esp_mqtt_client_init(&mqtt_cfg);
 
-        esp_mqtt_client_set_uri(_client, CONFIG_CLOCK_MQTT_URL);
-        esp_mqtt_client_start(_client);
+        ESP_ERROR_CHECK(esp_mqtt_client_set_uri(_client, CONFIG_CLOCK_MQTT_URL));
+        ESP_ERROR_CHECK(esp_mqtt_client_start(_client));
     }
 	EventBits_t bits = xEventGroupWaitBits(_mqttEventGrp, MQTT_EVENT_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
-	if (!bits) esp_restart();  // give up
+    assert(bits);
 
     esp_mqtt_client_subscribe(_client, _topic.ctrl, 1);
     esp_mqtt_client_subscribe(_client, _topic.ctrlGroup, 1);
@@ -146,6 +144,7 @@ mqtt_task(void * ipc) {
     _topic.data      = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
     _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(_ipc->dev.name) + 1);
     _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
+    assert(_topic.data && _topic.ctrl && _topic.ctrlGroup);
     sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, _ipc->dev.name);
     sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, _ipc->dev.name);
     sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);

@@ -61,7 +61,7 @@ static void
 _wifiStaStart(void * arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     ESP_LOGI(TAG, "STA start");
-    esp_wifi_connect();
+    ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
 static void
@@ -77,7 +77,7 @@ _wifiDisconnectHandler(void * arg_void, esp_event_base_t event_base, int32_t eve
         arg->server = NULL;
     }
     vTaskDelay(10000L / portTICK_PERIOD_MS);
-    esp_wifi_connect();
+    ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
 static void
@@ -104,6 +104,7 @@ static void
 _connect2wifi(ipc_t * const ipc)
 {
     _wifi_event_group = xEventGroupCreate();
+    assert(_wifi_event_group);
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -133,7 +134,7 @@ _connect2wifi(ipc_t * const ipc)
 
     // wait until either the connection is established
     EventBits_t bits = xEventGroupWaitBits(_wifi_event_group, WIFI_EVENT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY);
-    if (!bits) esp_restart();  // give up
+    assert(bits);
 }
 
 static void
@@ -168,13 +169,12 @@ app_main()
     ipc.toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
     ipc.toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
     ipc.toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
-    if (!ipc.toDisplayQ || !ipc.toClientQ || !ipc.toMqttQ) esp_restart();
+    assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
 
     _connect2wifi(&ipc);  // waits for connection established
 
     uint8_t mac[WIFI_DEVMAC_LEN];
-    esp_base_mac_addr_get(mac);
-    //ESP_LOGI(TAG, "MAC = %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5] );
+    ESP_ERROR_CHECK(esp_base_mac_addr_get(mac));
 
 	_mac2devname(mac, ipc.dev.name, WIFI_DEVNAME_LEN);
 

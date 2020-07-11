@@ -42,6 +42,7 @@ sendToClient(toClientMsgType_t const dataType, char const * const data, ipc_t co
         .dataType = dataType,
         .data = strdup(data)
     };
+    assert(msg.data);
     if (xQueueSendToBack(ipc->toClientQ, &msg, 0) != pdPASS) {
         ESP_LOGE(TAG, "toClientQ full");
         free(msg.data);
@@ -91,15 +92,13 @@ https_client_task(void * ipc_void)
 
     uint const pushId_len = 64;
     char * const pushId = malloc(pushId_len);
+    assert(pushId);
     *pushId = '\0';
 
     while (1) {
 
         char * url;
-        if (asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) < 0) {
-            ESP_LOGE(TAG, "no mem");
-            esp_restart();
-        }
+        assert(asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) >= 0);
         ESP_LOGI(TAG, "url = \"%s\"", url);
 
         esp_http_client_config_t config = {

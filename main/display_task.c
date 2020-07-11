@@ -46,6 +46,7 @@ sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t 
         .dataType = dataType,
         .data = strdup(data)
     };
+    assert(msg.data);
     if (xQueueSendToBack(ipc->toDisplayQ, &msg, 0) != pdPASS) {
         ESP_LOGE(TAG, "toDisplayQ full");
         free(msg.data);
@@ -191,7 +192,6 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
     struct tm nowTm;
     localtime_r(&now, &nowTm);
 
-    //ESP_LOGI(TAG, "now = %04d-%02d-%02d %02d:%02d", nowTm.tm_year + 1900, nowTm.tm_mon + 1, nowTm.tm_mday, nowTm.tm_hour, nowTm.tm_min);
     float const startsInHr = difftime(event->start, now) / 3600;
     float const endsInHr = difftime(event->end, now) / 3600;
 #define DEBUG (1)
@@ -213,13 +213,10 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         uint const endPxl = round((hrsFromToc + MIN(endsInHr, hrsOnClock)) * pxlsPerHr);
 #if DEBUG
         char * data;
-        if (asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
-                                 startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
-                                 endTm.tm_year + 1900, endTm.tm_mon + 1, endTm.tm_mday, endTm.tm_hour, endTm.tm_min, endsInHr,
-                                 startPxl, endPxl) < 0) {
-            ESP_LOGE(TAG, "no mem");
-            esp_restart();
-        }
+        assert(asprintf(&data, "%04d-%02d-%02d %02d:%02d (in %5.2fh) to %04d-%02d-%02d %02d:%02d (in %5.2fh) => %2u to %2u",
+                        startTm.tm_year + 1900, startTm.tm_mon + 1, startTm.tm_mday, startTm.tm_hour, startTm.tm_min, startsInHr,
+                        endTm.tm_year + 1900, endTm.tm_mon + 1, endTm.tm_mday, endTm.tm_hour, endTm.tm_min, endsInHr,
+                        startPxl, endPxl) >= 0);
         ESP_LOGI(TAG, "\"%s\"", data);
         sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);
         free(data);
@@ -250,10 +247,10 @@ display_task(void * ipc_void)
     ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, 0));
     led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(CONFIG_CLOCK_WS2812_COUNT, (led_strip_dev_t)config.channel);
     led_strip_t * const strip = led_strip_new_rmt_ws2812(&strip_config);
-    if (!strip) { ESP_LOGE(TAG, "Can't install WS2812 driver"); return; }
+    assert(strip);
 
     event_t * const events = (event_t *)malloc(sizeof(events_t));
-    if (!events) { ESP_LOGE(TAG, "No mem"); return; }
+    assert(events);
 
     uint len = 0;
     time_t now;
@@ -267,9 +264,8 @@ display_task(void * ipc_void)
             len = _json2events(msg.data, &now, events); // translate from serialized JSON "msg" to C representation "events"
             free(msg.data);
             ESP_LOGI(TAG, "Update");
-            _setTime(now); // update out time-of-day
+            _setTime(now);
         } else {
-            //ESP_LOGI(TAG, "No update");
             _getTime(&now);
         }
 
@@ -282,5 +278,6 @@ display_task(void * ipc_void)
             _addEventToStrip(event, now, &hue, strip);
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
+        // 2BD: maybe retry if TIMEOUT ??
     }
 }

@@ -41,9 +41,8 @@ _httpdPushHandler(httpd_req_t * req)
     }
     // +1 so even for no content body, we have a buf
     char * const buf = malloc(req->content_len + 1);  // https_client_task reads from Q and frees mem
-    if (!buf) {
-        ESP_LOGE(TAG, "No mem");
-    }
+    assert(buf);
+
     uint len = 0;
     while (len < req->content_len) {
         uint received = httpd_req_recv(req, buf + len, req->content_len);
@@ -56,9 +55,7 @@ _httpdPushHandler(httpd_req_t * req)
     uint const grs_len = 10;
     char grs[grs_len];
     bool const pushAck = httpd_req_get_hdr_value_str(req, "X-Goog-Resource-State", grs, grs_len) == ESP_OK && strcmp(grs, "sync") == 0;
-    if (pushAck) {
-        //ESP_LOGI(TAG, "ignoring push ack");
-    } else {
+    if (!pushAck) {
         buf[req->content_len] = '\0';
         ESP_LOGI(TAG, "Google push notification");
 
