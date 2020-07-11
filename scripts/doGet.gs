@@ -83,60 +83,50 @@ function doGet(e) {
 
     const email = Session.getEffectiveUser().getEmail();
 
-    Logger.log("local time is", localTime(new Date()));
-
+    var pushId = e.parameter.pushId;
     const Namespace_OID = "{6ba7b812-9dad-11d1-80b4-00c04fd430c8}"
     var channelId = NameToUUID(Namespace_OID, e.parameter.devName);
-    Logger.log('channelId =', channelId);
-
-    var pushId = e.parameter.pushId;
-    Logger.log('pushId =', pushId);
 
     disablePushNotifications(channelId, pushId);
     pushId = enablePushNotifications(channelId);
 
     var cal = CalendarApp.getCalendarById(email);
-    if (cal == undefined) { return ContentService.createTextOutput("no access to calendar"); }
-
-    var todayStart = new Date();
-    const oneDay = 24 * 3600000;  // Convert to milliseconds for calculations
-    todayStart.setHours(0, 0, 0); // Start at midnight today
+    if (!cal) {
+      return ContentService.createTextOutput("no access to calendar");
+    }
     const now = new Date();
-    const inHalfDay = new Date(now.getTime() + (oneDay / 2) - 1)
-    var events = cal.getEvents(now, (new Date(now.getTime() + oneDay)));
-    var eventStartRaw = [], eventEndRaw = [], raw = []
+    const oneDay = 24 * 3600000;  // [msec]
+    const events = cal.getEvents(now, (new Date(now.getTime() + oneDay)));
+
+    Logger.log("local time is", localTime(now));
+    var json = {
+      "time": new Date(now.getTime() - 25200000),
+      "pushId": pushId,
+      "events": [],
+    };
 
     for (var cc = 0; cc < events.length; cc++) {
         var event = events[cc];
-        var dgb = events[cc].getTitle()
+        const allDayEvent = event.getStartTime() == undefined;
         switch (event.getMyStatus()) {
             case CalendarApp.GuestStatus.OWNER:
             case CalendarApp.GuestStatus.YES:
-            case CalendarApp.GuestStatus.MAYBE: {
-                // Filters on events that would actually show on the clock face if shown
-                const allDayEvent = event.getStartTime() == undefined
-                const didntEndYet = event.getEndTime() < inHalfDay
-                const stillHasToStart = event.getStartTime() > now
+            case CalendarApp.GuestStatus.MAYBE:
                 if (!allDayEvent) {
-                    eventStartRaw.push(new Date(event.getStartTime().getTime() - 25200000))    //new Date(now.getTime() - 25200000)
-                    eventEndRaw.push(new Date(event.getEndTime().getTime() - 25200000))
-                    var qq = eventStartRaw.length - 1
-                    if ((eventStartRaw[qq] != eventStartRaw[qq - 1]) && (eventEndRaw[qq] != eventEndRaw[qq - 1])) {
-                        raw.push({ "start": eventStartRaw[qq], "stop": eventEndRaw[qq] })
-                    }
+                    const localStart = new Date(event.getStartTime().getTime() - 25200000);
+                    const localEnd = new Date(event.getEndTime().getTime() - 25200000);
+                    json.events.push({ "start": localStart, "stop": localEnd });
                 }
-            }
+                break;
             case CalendarApp.GuestStatus.NO:
             case CalendarApp.GuestStatus.INVITED:
                 break;
         }
     }
-    const correctedTime = new Date(now.getTime() - 25200000)
-    const myJSON = JSON.stringify({ "time": correctedTime, "pushId": pushId, "events": raw });
-    return ContentService.createTextOutput(myJSON).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify(json)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function test() {
-    var e = { 'parameter': { 'devName': 'dev123', 'pushId': '123' } };
+    var e = { 'parameter': { 'devName': 'dev123', 'pushId': null } };
     doGet(e);
 }
