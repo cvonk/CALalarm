@@ -26,7 +26,7 @@ function bytesToString(bytes) {
 }
 
 // https://stackoverflow.com/questions/10867405/generating-v5-uuid-what-is-name-and-namespace
-function NameToUUID(NamespaceUUID, Name) {
+function nameToUUID(NamespaceUUID, Name) {
 
     hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, NamespaceUUID + Name).slice(0, 14);
     hash[6] = (hash[6] & 0x0F) | 0x50;
@@ -51,8 +51,10 @@ function disablePushNotifications(channelId, resourceId) {
         });
 }
 
-function enablePushNotifications(channeId, email) {
+function enablePushNotifications(channelId, email, duration) {
 
+    const now = new Date();
+    const oneMin = 60000;  // [msec]
     const resp = UrlFetchApp.fetch(
         'https://www.googleapis.com/calendar/v3/calendars/' + email + '/events/watch',
         {
@@ -62,14 +64,15 @@ function enablePushNotifications(channeId, email) {
                 "Content-Type": "application/json"
             },
             'payload': JSON.stringify({
-                "id": channeId, //"01234567-89ab-cdef-0123456789ab",//,generate_uuid() your channel UUID
+                "id": channelId,
                 "type": "web_hook",
                 "address": "https://calendarclock.coertvonk.com/api/push",
+                'expiration': now.getTime() + duration * oneMin, // max is 1 hr
                 "params": {
-                    "ttl": 320 // [sec]
+                    "ttl": (60 * duration).toString()            // max is 1 hr [sec]
                 }
             }),
-            "muteHttpExceptions": true
+            "muteHttpExceptions": false//true
         }
     );
     if (resp.getResponseCode() != 200) {
@@ -81,26 +84,23 @@ function enablePushNotifications(channeId, email) {
 
 function doGet(e) {
 
+    const namespaceOID = "{6ba7b812-9dad-11d1-80b4-00c04fd430c8}"
+    var channelId = nameToUUID(namespaceOID, e.parameter.devName);
+    disablePushNotifications(channelId, e.parameter.pushId);
+
     const email = Session.getEffectiveUser().getEmail();
-
-    var pushId = e.parameter.pushId;
-    const Namespace_OID = "{6ba7b812-9dad-11d1-80b4-00c04fd430c8}"
-    var channelId = NameToUUID(Namespace_OID, e.parameter.devName);
-
-    disablePushNotifications(channelId, pushId);
-    pushId = enablePushNotifications(channelId);
+    pushId = enablePushNotifications(channelId, email, 60);
 
     var cal = CalendarApp.getCalendarById(email);
     if (!cal) {
-      return ContentService.createTextOutput("no access to calendar");
+      return ContentService.createTextOutput('no access to calendar (' + email + ')');
     }
     const now = new Date();
     const oneDay = 24 * 3600000;  // [msec]
     const events = cal.getEvents(now, (new Date(now.getTime() + oneDay)));
 
-    Logger.log("local time is", localTime(now));
     var json = {
-      "time": new Date(now.getTime() - 25200000),
+      "time": localTime(now),
       "pushId": pushId,
       "events": [],
     };
@@ -118,8 +118,7 @@ function doGet(e) {
                     json.events.push({ "start": localStart, "stop": localEnd });
                 }
                 break;
-            case CalendarApp.GuestStatus.NO:
-            case CalendarApp.GuestStatus.INVITED:
+            default:
                 break;
         }
     }

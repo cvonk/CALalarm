@@ -68,7 +68,6 @@ In the main directory, copy `Kconfig-example.projbuild` to `Kconfig.projbuild`. 
 - `WIFI_PASSWD`: Password of the WiFi access point to connect to.  Leave blank when provisioning using BLE and a phone app.
 - `CLOCK_WS2812_PIN`: Transmit GPIO# on ESP32 that connects to DATA on the LED circle.
 - `CLOCK_GAS_CALENDAR_URL`: Public URL of the Google Apps script that supplies calendar events as JSON.
-- `CLOCK_GAS_INTERVAL`: Number of minutes between polling the calendar events. When using push notifications this can set as high as e.g. 60 minutes.
 - `CLOCK_MQTT_URL`, Optional URL of the MQTT broker.  For authentication include the username and password, e.g. `mqtt://user:passwd@host.local:1883`
 - `OTA_FIRMWARE_URL`, Optional over-the-air URL that hosts the firmware image (`.bin`)
 - `RESET_PIN`, Optonal RESET input GPIO number on ESP32 that connects to a pull down switch (default 0)

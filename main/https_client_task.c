@@ -125,7 +125,10 @@ https_client_task(void * ipc_void)
         esp_http_client_cleanup(client);
 
         bool const pushActive = strlen(pushId);
-        uint const waitMinutes = pushActive ? CONFIG_CLOCK_GAS_INTERVAL : 1;
+        uint const pushServiceDuration = 60;  // max push notification service duration is 1 hr
+        int const minPerPxl = 12 * 60 / CONFIG_CLOCK_WS2812_COUNT;
+
+        uint const waitMinutes = pushActive ? pushServiceDuration : minPerPxl;
         toClientMsg_t msg;
         if (xQueueReceive(ipc->toClientQ, &msg, waitMinutes * 60000L / portTICK_PERIOD_MS) == pdPASS) {
             free(msg.data);
