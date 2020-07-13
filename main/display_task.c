@@ -230,7 +230,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
             _hsv2rgb(*hue, 100, brightness, &r, &g, &b);
             uint pxlPos = pp % CONFIG_CLOCK_WS2812_COUNT;
             if (flipped) {
-                pxlPos = CONFIG_CLOCK_WS2812_COUNT - pxlPos;
+                pxlPos = (CONFIG_CLOCK_WS2812_COUNT - pxlPos) % 60;
             }
             ESP_ERROR_CHECK(strip->set_pixel(strip, pxlPos, r, g, b));
         }
