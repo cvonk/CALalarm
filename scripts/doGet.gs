@@ -51,7 +51,7 @@ function disablePushNotifications(channelId, resourceId) {
         });
 }
 
-function enablePushNotifications(channelId, email, duration) {
+function enablePushNotifications(channelId, devName, email, duration) {
 
     const now = new Date();
     const oneMin = 60000;  // [msec]
@@ -66,7 +66,7 @@ function enablePushNotifications(channelId, email, duration) {
             'payload': JSON.stringify({
                 "id": channelId,
                 "type": "web_hook",
-                "address": "https://calendarclock.coertvonk.com/api/push",
+                "address": "https://' + devName + '.coertvonk.com/api/push",
                 'expiration': now.getTime() + duration * oneMin, // max is 1 hr
                 "params": {
                     "ttl": (60 * duration).toString()            // max is 1 hr [sec]
@@ -90,7 +90,7 @@ function doGet(e) {
     disablePushNotifications(channelId, e.parameter.pushId);
 
     const email = Session.getEffectiveUser().getEmail();
-    pushId = enablePushNotifications(channelId, email, 60);
+    pushId = enablePushNotifications(channelId, e.parameter.devName, email, 60);
 
     var cal = CalendarApp.getCalendarById(email);
     if (!cal) {
