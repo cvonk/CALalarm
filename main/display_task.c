@@ -187,7 +187,7 @@ _hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t *g, uint32_t 
 }
 
 static void
-_addEventToStrip(event_t const * const event, time_t const now, uint * const hue, led_strip_t * const strip)
+_addEventToStrip(event_t const * const event, time_t const now, uint * const hue, led_strip_t * const strip, bool const flipped)
 {
     struct tm nowTm;
     localtime_r(&now, &nowTm);
@@ -223,12 +223,16 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
 #endif
         for (uint pp = startPxl; pp < endPxl; pp++) {
             uint const minBrightness = 1;
-            uint const maxBrightness = 2;
+            uint const maxBrightness = flipped ? 50 : 2;
             uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CLOCK_WS2812_COUNT;
             uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
             uint r, g, b;
             _hsv2rgb(*hue, 100, brightness, &r, &g, &b);
-            ESP_ERROR_CHECK(strip->set_pixel(strip, pp % CONFIG_CLOCK_WS2812_COUNT, r, g, b));
+            uint pxlPos = pp % CONFIG_CLOCK_WS2812_COUNT;
+            if (flipped) {
+                pxlPos = CONFIG_CLOCK_WS2812_COUNT - pxlPos;
+            }
+            ESP_ERROR_CHECK(strip->set_pixel(strip, pxlPos, r, g, b));
         }
         uint const goldenAngle = 137;
         *hue = (*hue + goldenAngle) % 360;
@@ -255,6 +259,7 @@ display_task(void * ipc_void)
     uint len = 0;
     time_t now;
     time_t const loopInSec = 60;  // how often the while-loop runs [msec]
+    bool const flipped = strcmp(_ipc->dev.name, "calclock-2") == 0;
     while (1) {
 
         // if there was an calendar update then apply it
@@ -275,7 +280,7 @@ display_task(void * ipc_void)
         event_t const * event = events;
         ESP_ERROR_CHECK(strip->clear(strip, 100));  // turn off all LEDs
         for (uint ee = 0; ee < len; ee++, event++) {
-            _addEventToStrip(event, now, &hue, strip);
+            _addEventToStrip(event, now, &hue, strip, flipped);
         }
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
         // 2BD: maybe retry if TIMEOUT ??
