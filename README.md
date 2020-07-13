@@ -78,11 +78,11 @@ The ESP32 firmware relies on the ESP-IDF SDK version >= 4.1-beta2 and accompanyi
 
 The firmware loads in two stages:
   1. `factory.bin` configures the WiFi using phone app (not used when WiFi credentials are set using `Kconfig`)
-  2. `calendarclock.bin`, the main application
+  2. `calclock.bin`, the main application
 
-Compile `calendarclock.bin` first, by opening the top level folder in Microsft Visual Code and issuing "Terminal >> Run Task >> Build - Build the application".
+Compile `calclock.bin` first, by opening the top level folder in Microsft Visual Code and issuing "Terminal >> Run Task >> Build - Build the application".
 
-When using OTA updates, the resulting `build/calendarclock.bin` should be copied to the OTA file server (`OTA_FIRMWARE_URL`).
+When using OTA updates, the resulting `build/calclock.bin` should be copied to the OTA file server (`OTA_FIRMWARE_URL`).
 
 ### Provision WiFi credentials
 
@@ -96,7 +96,7 @@ On your phone run the Espressif BLE Provisioning app.
 Scan and connect to the ESP32.  Then specify the WiFi SSID and password.
 (You probably have to change `_ble_device_name_prefix` to `PROV_` in `factory\main.c` and change the `config.service_uuid` in `ble_prov.c` to us the mobile apps.)
 
-This stores the WiFi SSID and password in flash memory and triggers a OTA download of the application itself.  Alternatively, don't supply the OTA path and flash the `calendarclock.bin` application using the serial port.
+This stores the WiFi SSID and password in flash memory and triggers a OTA download of the application itself.  Alternatively, don't supply the OTA path and flash the `calclock.bin` application using the serial port.
 
 (To erase the WiFi credentials, pull `GPIO# 0` down for at least 3 seconds.)
 
@@ -134,8 +134,8 @@ To give the script the nescesary permissions, we need to switch it /default/ GCP
 To easily see what version of the software is running on the device, or what WiFi network it is connected to, the firmware contains a MQTT client.
 
 To control the device, sent a control message to either MQTT topic:
-- `calendarclock/ctrl`, all devices listen to this
-- `calendarclock/ctrl/DEVNAME`, only `DEVAME` listens to this
+- `calclock/ctrl`, all devices listen to this
+- `calclock/ctrl/DEVNAME`, only `DEVAME` listens to this
 Here `DEVNAME` is either a programmed device name, such as `esp32-1`, or `esp32_XXXX` where the `XXXX` are the last digits of the MAC address.
 
 Control messages are:
@@ -144,13 +144,13 @@ Control messages are:
 
 Messages can be sent to a specific device, or the whole group:
 ```
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calendarclock/ctrl/esp32_0123" -m "restart"
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calendarclock/ctrl" -m "who"
+mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/ctrl/esp32_0123" -m "restart"
+mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/ctrl" -m "who"
 ```
 
-Replies to control messages and calendar events are reported using MQTT topic `calendarclock/data/DEVNAME`.  E.g. to listen to all devices:
+Replies to control messages and calendar events are reported using MQTT topic `calclock/data/DEVNAME`.  E.g. to listen to all devices:
 ```
-mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calendarclock/data/#" -v
+mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/data/#" -v
 ```
 where `#` is the MQTT wildcard character.
 
