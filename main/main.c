@@ -60,7 +60,7 @@ _initNvsFlash(void)
 static void
 _wifiStaStart(void * arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
-    ESP_LOGI(TAG, "STA start");
+    ESP_LOGI(TAG, "STA start => connect to WiFi AP");
     ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
