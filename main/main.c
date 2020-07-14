@@ -61,13 +61,14 @@ static void
 _wifiStaStart(void * arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     ESP_LOGI(TAG, "STA start => connect to WiFi AP");
+    //event_handler_arg_t * const arg = arg_void;
     ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
 static void
 _wifiDisconnectHandler(void * arg_void, esp_event_base_t event_base, int32_t event_id, void * event_data)
 {
-    ESP_LOGI(TAG, "Disconnected from WiFi");
+    ESP_LOGI(TAG, "WiFi disconnected");
     xEventGroupClearBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
 
     event_handler_arg_t * const arg = arg_void;
@@ -83,9 +84,8 @@ _wifiDisconnectHandler(void * arg_void, esp_event_base_t event_base, int32_t eve
 static void
 _wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event_id, void * event_data)
 {
-    ESP_LOGI(TAG, "Connected to WiFi");
+    ESP_LOGI(TAG, "Wifi connected");
     event_handler_arg_t * const arg = arg_void;
-
     xEventGroupSetBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
 
     ipc_t * const ipc = arg->ipc;
@@ -97,7 +97,6 @@ _wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event
         ESP_LOGI(TAG, "Starting webserver");
         arg->server = http_post_server_start(arg->ipc);
     }
-    //pool_mdns_init();
 }
 
 static void
@@ -121,7 +120,7 @@ _connect2wifi(ipc_t * const ipc)
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &_wifiConnectHandler, &event_handler_arg));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    if (strlen(CONFIG_WIFI_SSID) && strlen(CONFIG_WIFI_PASSWD)) {
+    if (strlen(CONFIG_WIFI_SSID)) {
         wifi_config_t wifi_config = {
             .sta = {
                 .ssid = CONFIG_WIFI_SSID,
@@ -133,8 +132,7 @@ _connect2wifi(ipc_t * const ipc)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     // wait until either the connection is established
-    EventBits_t bits = xEventGroupWaitBits(_wifi_event_group, WIFI_EVENT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY);
-    assert(bits);
+    assert(xEventGroupWaitBits(_wifi_event_group, WIFI_EVENT_CONNECTED, pdFALSE, pdFALSE, portMAX_DELAY));
 }
 
 static void
@@ -176,7 +174,6 @@ app_main()
 
     uint8_t mac[WIFI_DEVMAC_LEN];
     ESP_ERROR_CHECK(esp_base_mac_addr_get(mac));
-
 	_mac2devname(mac, ipc.dev.name, WIFI_DEVNAME_LEN);
 
     // from here the tasks take over
