@@ -79,16 +79,13 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
                 if (strncmp("restart", event->data, event->data_len) == 0) {
 
-                    char const * const payload = "{ \"response\": \"restarting\" }";
-                    esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
+                    sendToMqtt(TO_MQTT_MSGTYPE_RESTART, "{ \"response\": \"restarting\" }", ipc);
                     vTaskDelay(1000 / portTICK_PERIOD_MS);
                     esp_restart();
 
                 } else if (strncmp("push", event->data, event->data_len) == 0) {
 
-                    char const * const payload = "{ \"response\": \"pushed by MQTT\" }";
-                    esp_mqtt_client_publish(event->client, _topic.data, payload, strlen(payload), 1, 0);
-
+                    sendToMqtt(TO_MQTT_MSGTYPE_PUSH, "{ \"response\": \"pushed by MQTT\" }", ipc);
                     sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, "mqtt push", ipc);
 
                 } else if (strncmp("who", event->data, event->data_len) == 0) {
@@ -109,7 +106,7 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
                         ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT)
                     );
                     assert(payload_len >= 0);
-                    esp_mqtt_client_publish(event->client, _topic.data, payload, payload_len, 1, 0);
+                    sendToMqtt(TO_MQTT_MSGTYPE_WHO, payload, ipc);
                     free(payload);
                 }
             }
@@ -139,6 +136,26 @@ _connect2broker(ipc_t const * const ipc) {
     return client;
 }
 
+static char *
+_type2subtopic(toMqttMsgType_t const type)
+{
+    struct mapping {
+        toMqttMsgType_t const type;
+        char const * const subtopic;
+    } mapping[] = {
+        { TO_MQTT_MSGTYPE_RESTART, "restart" },
+        { TO_MQTT_MSGTYPE_PUSH, "push" },
+        { TO_MQTT_MSGTYPE_WHO, "who" },
+        { TO_MQTT_MSGTYPE_DBG, "dbg" },
+    };
+    for (uint ii = 0; ii < ARRAYSIZE(mapping); ii++) {
+        if (type == mapping[ii].type) {
+            return mapping[ii].subtopic;
+        }
+    }
+    return NULL;
+}
+
 void
 mqtt_task(void * ipc_void) {
 
@@ -159,11 +176,15 @@ mqtt_task(void * ipc_void) {
 	while (1) {
         toMqttMsg_t msg;
 		if (xQueueReceive(ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
-            switch (msg.dataType) {
-                case TO_MQTT_MSGTYPE_DATA:
-        			esp_mqtt_client_publish(client, _topic.data, msg.data, strlen(msg.data), 1, 0);
-                    break;
+            char * subtopic = _type2subtopic(msg.dataType);
+            char * topic;
+            if (subtopic) {
+                topic = asprintf("%s/%s", _topic.data, subtopic);
+            } else {
+                topic = strdup(_topic.data);
             }
+            esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
+            free(topic);
             free(msg.data);
 		}
 	}

@@ -218,7 +218,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
                         endTm.tm_year + 1900, endTm.tm_mon + 1, endTm.tm_mday, endTm.tm_hour, endTm.tm_min, endsInHr,
                         startPxl, endPxl) >= 0);
         ESP_LOGI(TAG, "\"%s\"", data);
-        sendToMqtt(TO_MQTT_MSGTYPE_DATA, data, _ipc);
+        sendToMqtt(TO_MQTT_MSGTYPE_DBG, data, _ipc);
         free(data);
 #endif
         for (uint pp = startPxl; pp < endPxl; pp++) {

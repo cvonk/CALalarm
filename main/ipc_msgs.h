@@ -16,7 +16,10 @@ typedef struct ipc_t {
 } ipc_t;
 
 typedef enum toMqttMsgType_t {
-    TO_MQTT_MSGTYPE_DATA,
+    TO_MQTT_MSGTYPE_RESTART,
+    TO_MQTT_MSGTYPE_PUSH,
+    TO_MQTT_MSGTYPE_WHO,
+    TO_MQTT_MSGTYPE_DBG,
 } toMqttMsgType_t;
 
 typedef struct toMqttMsg_t {

@@ -115,7 +115,7 @@ https_client_task(void * ipc_void)
             if (status == 200) {
                 _data[_data_len] = '\0';
                 ESP_LOGI(TAG, "\"%s\"", _data);
-                sendToMqtt(TO_MQTT_MSGTYPE_DATA, _data, ipc);
+                sendToMqtt(TO_MQTT_MSGTYPE_DBG, _data, ipc);
                 sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
                 _json2pushId(_data, pushId, pushId_len);
             }
