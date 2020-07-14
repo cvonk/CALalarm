@@ -136,7 +136,7 @@ _connect2broker(ipc_t const * const ipc) {
     return client;
 }
 
-static char *
+static char const *
 _type2subtopic(toMqttMsgType_t const type)
 {
     struct mapping {
@@ -176,10 +176,10 @@ mqtt_task(void * ipc_void) {
 	while (1) {
         toMqttMsg_t msg;
 		if (xQueueReceive(ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
-            char * subtopic = _type2subtopic(msg.dataType);
+            char const * const subtopic = _type2subtopic(msg.dataType);
             char * topic;
             if (subtopic) {
-                topic = asprintf("%s/%s", _topic.data, subtopic);
+                asprintf(&topic, "%s/%s", _topic.data, subtopic);
             } else {
                 topic = strdup(_topic.data);
             }
