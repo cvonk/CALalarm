@@ -34,7 +34,6 @@ typedef enum {
 } mqttEvent_t;
 
 static struct {
-    char * data;
     char * ctrl;
     char * ctrlGroup;
 } _topic;
@@ -71,7 +70,6 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
             xEventGroupSetBits(_mqttEventGrp, MQTT_EVENT_CONNECTED_BIT);
             esp_mqtt_client_subscribe(event->client, _topic.ctrl, 1);
             esp_mqtt_client_subscribe(event->client, _topic.ctrlGroup, 1);
-            ESP_LOGI(TAG, " publishing to \"%s\"", _topic.data);
             ESP_LOGI(TAG, " subscribed to \"%s\", \"%s\"", _topic.ctrl, _topic.ctrlGroup);
             break;
         case MQTT_EVENT_DATA:
@@ -162,11 +160,9 @@ mqtt_task(void * ipc_void) {
     ESP_LOGI(TAG, "starting ..");
 	ipc_t * ipc = ipc_void;
 
-    _topic.data      = malloc(strlen(CONFIG_CLOCK_MQTT_DATA_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
     _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
     _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
-    assert(_topic.data && _topic.ctrl && _topic.ctrlGroup);
-    sprintf(_topic.data, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+    assert(_topic.ctrl && _topic.ctrlGroup);
     sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, ipc->dev.name);
     sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);
 
@@ -176,12 +172,13 @@ mqtt_task(void * ipc_void) {
 	while (1) {
         toMqttMsg_t msg;
 		if (xQueueReceive(ipc->toMqttQ, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
-            char const * const subtopic = _type2subtopic(msg.dataType);
+
             char * topic;
+            char const * const subtopic = _type2subtopic(msg.dataType);
             if (subtopic) {
-                asprintf(&topic, "%s/%s", _topic.data, subtopic);
+                asprintf(&topic, "%s/%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, subtopic, ipc->dev.name);
             } else {
-                topic = strdup(_topic.data);
+                asprintf(&topic, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
             }
             esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
             free(topic);
