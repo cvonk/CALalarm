@@ -144,9 +144,10 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 		char const * const name;
 	} knownBrd_t;
 	static knownBrd_t knownBrds[] = {
-        { {0x30, 0xAE, 0xA4, 0xCC, 0x42, 0x78}, "esp32-wrover-1" },
         { {0x30, 0xAE, 0xA4, 0x1A, 0x20, 0xF0}, "calclock-1" },
         { {0x30, 0xAE, 0xA4, 0x24, 0x2C, 0x98}, "calclock-2" },
+        { {0x30, 0xae, 0xa4, 0xcc, 0x45, 0x04}, "esp32-wrover-1" },
+        { {0x30, 0xAE, 0xA4, 0xCC, 0x42, 0x78}, "esp32-wrover-2" },
 	};
 	for (uint ii=0; ii < ARRAYSIZE(knownBrds); ii++) {
 		if (memcmp(mac, knownBrds[ii].mac, WIFI_DEVMAC_LEN) == 0) {
