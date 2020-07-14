@@ -11,6 +11,10 @@ typedef struct ipc_t {
     struct dev {
         char ipAddr[WIFI_DEVIPADDR_LEN];
         char name[WIFI_DEVNAME_LEN];
+        struct connectCnt {
+            uint wifi;
+            uint mqtt;
+        } connectCnt;
     } dev;
 
 } ipc_t;

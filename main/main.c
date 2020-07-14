@@ -86,9 +86,11 @@ _wifiConnectHandler(void * arg_void, esp_event_base_t event_base,  int32_t event
 {
     ESP_LOGI(TAG, "Wifi connected");
     event_handler_arg_t * const arg = arg_void;
-    xEventGroupSetBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
-
     ipc_t * const ipc = arg->ipc;
+
+    xEventGroupSetBits(_wifi_event_group, WIFI_EVENT_CONNECTED);
+    ipc->dev.connectCnt.wifi++;
+
     ip_event_got_ip_t const * const event = (ip_event_got_ip_t *) event_data;
     snprintf(ipc->dev.ipAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(&event->ip_info.ip));
     ESP_LOGI(TAG, "IP addr = %s", ipc->dev.ipAddr);
@@ -168,6 +170,8 @@ app_main()
     ipc.toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
     ipc.toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
     ipc.toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
+    ipc.dev.connectCnt.wifi = 0;
+    ipc.dev.connectCnt.mqtt = 0;
     assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
 
     _connect2wifi(&ipc);  // waits for connection established

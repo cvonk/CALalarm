@@ -57,7 +57,7 @@ sendToMqtt(toMqttMsgType_t const dataType, char const * const data, ipc_t const 
 static esp_err_t
 _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
-    ipc_t const * const ipc = event->user_context;
+    ipc_t * const ipc = event->user_context;
 
 	switch (event->event_id) {
         case MQTT_EVENT_DISCONNECTED:
@@ -68,6 +68,7 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "Broker connected");
             xEventGroupSetBits(_mqttEventGrp, MQTT_EVENT_CONNECTED_BIT);
+            ipc->dev.connectCnt.mqtt++;
             esp_mqtt_client_subscribe(event->client, _topic.ctrl, 1);
             esp_mqtt_client_subscribe(event->client, _topic.ctrlGroup, 1);
             ESP_LOGI(TAG, " subscribed to \"%s\", \"%s\"", _topic.ctrl, _topic.ctrlGroup);
@@ -97,11 +98,12 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 
                     char * payload;
                     int const payload_len = asprintf(&payload,
-                        "{ \"name\": \"%s\", \"address\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"SSID\": \"%s\", \"RSSI\": %d }, \"mem\": { \"heap\": %u } }",
-                        ipc->dev.name, ipc->dev.ipAddr,
+                        "{ \"name\": \"%s\", \"firmware\": { \"version\": \"%s.%s\", \"date\": \"%s %s\" }, \"wifi\": { \"connect\": %u, \"address\": \"%s\", \"SSID\": \"%s\", \"RSSI\": %d }, \"mqtt\": { \"connect\": %u }, \"mem\": { \"heap\": %u } }",
+                        ipc->dev.name,
                         running_app_info.project_name, running_app_info.version,
                         running_app_info.date, running_app_info.time,
-                        ap_info.ssid, ap_info.rssi, heap_caps_get_free_size(MALLOC_CAP_8BIT)
+                        ipc->dev.connectCnt.wifi, ipc->dev.ipAddr, ap_info.ssid, ap_info.rssi,
+                        ipc->dev.connectCnt.mqtt, heap_caps_get_free_size(MALLOC_CAP_8BIT)
                     );
                     assert(payload_len >= 0);
                     sendToMqtt(TO_MQTT_MSGTYPE_WHO, payload, ipc);
