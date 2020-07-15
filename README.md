@@ -118,7 +118,7 @@ To improve response time we have the option of using the [Push Notifications API
 > 2. Set up your receiving URL, or "Webhook" callback receiver.
 > 3. Set up a notification channel for each resource endpoint you want to watch.
 
-For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy.  Please refer to [Traversing your access router](https://coertvonk.com/sw/embedded/turning-on-the-light-the-hard-way-26806#traverse) for more details.
+For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy.  Please refer to [Traversing your access router](https://coertvonk.com/sw/embedded/turning-on-the-light-the-hard-way-26806#traverse) for more details.  On the Google Console end, visit APIs and Services > Domain Verification > Add domain.
 
 The second requirement is met by `http_post_server.c`.  Note that the reverse proxy forwards the HTTPS request from Google as HTTP to the device.
 

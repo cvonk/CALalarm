@@ -17,6 +17,8 @@
 #include <freertos/task.h>
 #include <mqtt_client.h>
 #include <esp_ota_ops.h>
+#include <esp_core_dump.h>
+#include <esp_flash.h>
 
 #include "mqtt_task.h"
 #include "ipc_msgs.h"
@@ -25,6 +27,8 @@
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
 #define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
 #define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
+#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 static char const * const TAG = "mqtt_task";
 
@@ -156,6 +160,74 @@ _type2subtopic(toMqttMsgType_t const type)
     return NULL;
 }
 
+static void
+_getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
+{
+    // BIN or ELF coredumping doesn't appear ready for primetime on SDK 4.1-beta2, try on 'master'
+    esp_core_dump_init();
+    size_t coredump_addr;
+    size_t coredump_size;
+    esp_err_t err = esp_core_dump_image_get(&coredump_addr, &coredump_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Coredump no image (%s)", esp_err_to_name(err));
+        ESP_LOGW(TAG, " address %x > chip->size %x, ", coredump_addr, esp_flash_default_chip->size);
+        ESP_LOGW(TAG, " address + length %x > chip->size %x", coredump_addr + coredump_size, esp_flash_default_chip->size);
+        return;
+    }
+
+
+    //esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
+    //if (!part) {
+    //    ESP_LOGE(TAG, "Coredump no part");
+    //    return;
+    //}
+
+    size_t const chunk_len = 64;  //256
+    size_t const str_len = 8 + 1 + chunk_len * 2 + 1;
+    uint8_t * const chunk = malloc(chunk_len);
+    char * const str = malloc(str_len);
+    assert(chunk && str);
+
+    ESP_LOGI(TAG, "Coredump is %u bytes", coredump_size);
+
+    char * topic;
+    asprintf(&topic, "%s/coredump/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+
+    for (size_t offset = 0; offset < coredump_size; offset += chunk_len) {
+
+        uint const read_len = MIN(chunk_len, coredump_size - offset);
+        //ESP_LOGI(TAG, "offset=0x%x coredump_size=%u, read_len=%u", offset, coredump_size, read_len);
+        //if (esp_partition_read(part, offset, chunk, read_len) != ESP_OK) {
+        if (esp_flash_read(esp_flash_default_chip, chunk, coredump_addr + offset , read_len)) {
+            ESP_LOGE(TAG, "Coredump read failed");
+            break;
+        }
+        uint len = 0;
+        len += snprintf(str + len, str_len - len, "%08x ", offset);
+        for (uint ii = 0; ii < read_len; ii++) {
+            len += snprintf(str + len, str_len - len, "%02x", chunk[ii]);
+        }
+        //printf("%s", str);  //  2BD: to MQTT??
+        esp_mqtt_client_publish(client, topic, str, len, 1, 0);
+    }
+    free(topic);
+    free(chunk);
+    free(str);
+
+    //esp_flash_erase_region(esp_flash_default_chip, coredump_addr, coredump_size);
+
+#if 0
+    {
+        esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, "coredump");
+        if (!part) {
+            ESP_LOGE(TAG, "Coredump no part 1");
+            return;
+        }
+        esp_partition_erase_range(part, 0, part->size);
+    }
+#endif
+}
+
 void
 mqtt_task(void * ipc_void) {
 
@@ -170,6 +242,8 @@ mqtt_task(void * ipc_void) {
 
 	_mqttEventGrp = xEventGroupCreate();
     esp_mqtt_client_handle_t const client = _connect2broker(ipc);
+
+    _getCoredump(ipc, client);
 
 	while (1) {
         toMqttMsg_t msg;

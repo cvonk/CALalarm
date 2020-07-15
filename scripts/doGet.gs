@@ -66,7 +66,7 @@ function enablePushNotifications(channelId, devName, email, duration) {
             'payload': JSON.stringify({
                 "id": channelId,
                 "type": "web_hook",
-                "address": "https://' + devName + '.coertvonk.com/api/push",
+                "address": "https://" + devName + ".coertvonk.com/api/push",
                 'expiration': now.getTime() + duration * oneMin, // max is 1 hr
                 "params": {
                     "ttl": (60 * duration).toString()            // max is 1 hr [sec]
@@ -128,6 +128,6 @@ function doGet(e) {
 }
 
 function test() {
-    var e = { 'parameter': { 'devName': 'dev123', 'pushId': null } };
+    var e = { 'parameter': { 'devName': 'calclock-2', 'pushId': null } };
     doGet(e);
 }
