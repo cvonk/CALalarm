@@ -21,6 +21,7 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <esp_ota_ops.h>
+#include <esp_core_dump.h>
 
 #include "ota_task.h"
 #include "reset_task.h"
@@ -157,6 +158,62 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 	}
 	snprintf(name, name_len, "esp32_%02x%02x",
 			 mac[WIFI_DEVMAC_LEN-2], mac[WIFI_DEVMAC_LEN-1]);
+}
+
+static void
+_getCoredump(void)
+{
+    // BIN or ELF coredumping doesn't appear ready for primetime on SDK 4.1-beta2
+    esp_core_dump_init();
+#if 0
+    {
+        esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, "coredump");
+        if (!part) {
+            ESP_LOGE(TAG, "Coredump no part 1");
+            return;
+        }
+        esp_partition_erase_range(part, 0, part->size);
+    }
+#endif
+
+    esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
+    if (!part) {
+        ESP_LOGE(TAG, "Coredump no part");
+        return;
+    }
+
+    size_t part_addr;
+    size_t part_size;
+    esp_err_t err = esp_core_dump_image_get(&part_addr, &part_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Coredump no image (%s)", esp_err_to_name(err));
+        ESP_LOGW(TAG, " address %x > chip->size %x, ", part_addr, esp_flash_default_chip->size);
+        ESP_LOGW(TAG, " address + length %x > chip->size %x", part_addr + part_size, esp_flash_default_chip->size);
+        return;
+    }
+
+    size_t const chunk_len = 256;
+    size_t const str_len = chunk_len * 2 + 1;
+    uint8_t * const chunk = malloc(chunk_len);
+    char * const str = malloc(str_len);
+    assert(chunk && str);
+
+    for (size_t offset = 0; offset < part_size; offset += chunk_len) {
+
+        uint const read_len = MIN(chunk_len, part_size - offset);
+        //ESP_LOGI(TAG, "offset=0x%x part_size=%u, read_len=%u", offset, part_size, read_len);
+        if (esp_partition_read(part, offset, chunk, read_len) != ESP_OK) {
+            ESP_LOGE(TAG, "Coredump read failed");
+            break;
+        }
+        uint len = 0;
+        for (uint ii = 0; ii < read_len; ii++) {
+            len += snprintf(str + len, str_len - len, "%02x", chunk[ii]);
+        }
+        printf("%s", str);  //  2BD: to MQTT??
+    }
+    free(chunk);
+    free(str);
 }
 
 void
