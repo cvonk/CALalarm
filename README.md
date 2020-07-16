@@ -18,6 +18,11 @@ h
 
 ## Usage
 
+Clone the repository
+```
+git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock-Sander.git
+```
+
 :
 :
 :

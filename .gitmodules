@@ -1,0 +1,4 @@
+[submodule "components/coredump_to_server"]
+	path = components/coredump_to_server
+	url = https://github.com/cvonk/ESP32_coredump-to-server
+	branch = master

@@ -175,9 +175,6 @@ app_main()
     ipc.dev.connectCnt.mqtt = 0;
     assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
 
-//_getCoredump();
-//assert(0);
-
     _connect2wifi(&ipc);  // waits for connection established
 
     uint8_t mac[WIFI_DEVMAC_LEN];
