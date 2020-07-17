@@ -22,6 +22,7 @@
 
 #include "mqtt_task.h"
 #include "ipc_msgs.h"
+#include "coredump_to_server.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
 #define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
@@ -160,6 +161,7 @@ _type2subtopic(toMqttMsgType_t const type)
     return NULL;
 }
 
+#if 0
 static void
 _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
 {
@@ -174,14 +176,6 @@ _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
         ESP_LOGW(TAG, " address + length %x > chip->size %x", coredump_addr + coredump_size, esp_flash_default_chip->size);
         return;
     }
-
-
-    //esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
-    //if (!part) {
-    //    ESP_LOGE(TAG, "Coredump no part");
-    //    return;
-    //}
-
     size_t const chunk_len = 64;  //256
     size_t const str_len = 8 + 1 + chunk_len * 2 + 1;
     uint8_t * const chunk = malloc(chunk_len);
@@ -207,7 +201,6 @@ _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
         for (uint ii = 0; ii < read_len; ii++) {
             len += snprintf(str + len, str_len - len, "%02x", chunk[ii]);
         }
-        //printf("%s", str);  //  2BD: to MQTT??
         esp_mqtt_client_publish(client, topic, str, len, 1, 0);
     }
     free(topic);
@@ -215,17 +208,28 @@ _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
     free(str);
 
     //esp_flash_erase_region(esp_flash_default_chip, coredump_addr, coredump_size);
-
-#if 0
-    {
-        esp_partition_t const * const part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, "coredump");
-        if (!part) {
-            ESP_LOGE(TAG, "Coredump no part 1");
-            return;
-        }
-        esp_partition_erase_range(part, 0, part->size);
-    }
+}
 #endif
+
+static esp_err_t
+_coredump_to_server_begin_cb(void * priv)
+{
+    printf("================= CORE DUMP START =================\n");
+    return ESP_OK;
+}
+
+static esp_err_t
+_coredump_to_server_end_cb(void * priv)
+{
+    printf("================= CORE DUMP END ===================\n");
+    return ESP_OK;
+}
+
+static esp_err_t
+_coredump_to_server_write_cb(void * priv, char const * const str)
+{
+    printf("%s\r\n", str);
+    return ESP_OK;
 }
 
 void
@@ -243,7 +247,13 @@ mqtt_task(void * ipc_void) {
 	_mqttEventGrp = xEventGroupCreate();
     esp_mqtt_client_handle_t const client = _connect2broker(ipc);
 
-    _getCoredump(ipc, client);
+    coredump_to_server_config_t coredump_cfg = {
+        .start = _coredump_to_server_begin_cb,
+        .end = _coredump_to_server_end_cb,
+        .write = _coredump_to_server_write_cb,
+        .priv = NULL,
+    };
+    coredump_to_server(&coredump_cfg);
 
 	while (1) {
         toMqttMsg_t msg;

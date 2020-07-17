@@ -21,8 +21,8 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <esp_ota_ops.h>
+#include <ota_update_task.h>
 
-#include "ota_task.h"
 #include "reset_task.h"
 #include "http_post_server.h"
 #include "https_client_task.h"
@@ -175,9 +175,6 @@ app_main()
     ipc.dev.connectCnt.mqtt = 0;
     assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
 
-//_getCoredump();
-//assert(0);
-
     _connect2wifi(&ipc);  // waits for connection established
 
     uint8_t mac[WIFI_DEVMAC_LEN];
@@ -186,7 +183,7 @@ app_main()
 
     // from here the tasks take over
 
-    xTaskCreate(&ota_task, "ota_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&ota_update_task, "ota_update_task", 4096, NULL, 5, NULL);
     xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&https_client_task, "https_client_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&mqtt_task, "mqtt_task", 2*4096, &ipc, 5, NULL);
