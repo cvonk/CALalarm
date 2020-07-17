@@ -1,9 +1,11 @@
 # ESP32 Calender Clock
 
+[![LICENSE](https://img.shields.io/github/license/jvonk/pact)](LICENSE)
+
 Shows upcoming events for the next 12 hours on a LED circle (incorporated in a clock faceplate)
 
 Goal is to visualize calendar appointments on an analog 12 clock.
-h
+
 : add picture
 
 ![Glass clock with LED circle behind](media/photo.png)
@@ -23,6 +25,12 @@ The software relies on the master ESP-IDF SDK version v4.3-dev-472-gcf056a7d0 an
 Clone the repository
 ```
 git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock-Sander.git
+```
+
+Pull updates
+```
+git pull
+git submodule update --recursive --remote
 ```
 
 :
