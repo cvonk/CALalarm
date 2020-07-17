@@ -10,3 +10,7 @@
 	path = components/ble_prov
 	url = https://github.com/cvonk/ESP32_ble-prov.git
 	branch = master
+[submodule "components/factory_reset_task"]
+	path = components/factory_reset_task
+	url = https://github.com/cvonk/ESP32_factory-reset-task.git
+	branch = master
