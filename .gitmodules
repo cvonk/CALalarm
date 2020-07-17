@@ -6,10 +6,6 @@
 	path = components/ota_update_task
 	url = https://github.com/cvonk/ESP32_ota-update-task.git
 	branch = master
-[submodule "components/ble_prov"]
-	path = components/ble_prov
-	url = https://github.com/cvonk/ESP32_ble-prov.git
-	branch = master
 [submodule "components/factory_reset_task"]
 	path = components/factory_reset_task
 	url = https://github.com/cvonk/ESP32_factory-reset-task.git
