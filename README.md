@@ -18,9 +18,7 @@ h
 
 ## Usage
 
-:
-:
-:
+This project can be used as anything from a decorative/interactive art piece to a normal clock that can remind you of upcoming appointments in a fun and cleanly designed way.
 
 
 ## Hardware
@@ -30,7 +28,7 @@ h
 :
 
 Parts:
-- RGB LED Pixel Ring containing 60 WS2812B SMD5050 adressable LEDs (e.g. "Chinly Addressable 60 Pixel LED Ring").  These WS2812B pixels are 5V, and draw about 60 mA each at full brightness.  If you plan to use it in a bedroom, you probably want less bright LEDS such as WS2812 (without the "B").
+- RGB LED Pixel Ring containing 60 WS2812B SMD5050 addressable LEDs (e.g. "Chinly Addressable 60 Pixel LED Ring").  These WS2812B pixels are 5V, and draw about 60 mA each at full brightness.  If you plan to use it in a bedroom, you probably want less bright LEDS such as WS2812 (without the "B").
 - ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32 or MELIFE ESP32.
 - 5 Volt, 3 Amp power adapter
 - Capacitor (470 uF / 16V)
@@ -47,10 +45,7 @@ The software is a symbiosis betweeen a Google Apps Script and firmware running o
 
 See `script\doGet.gs`
 
-:
-: explain what it does and how to deploy
-:
-
+The section of the code hosted on Google Scripts serves to provide a means of accessing and then grabbing upcoming events from your calendar, then lightly fliltering them before sending the back via the webapp to the C code. This is accoplished with the Google Calendar API. Also part of this script is the push notification system, which is set up through Google Cloud and allows the Clock to update almost instantally when events are added, removed, or changed
 ## Firmware for the ESP32
 
 The ESP32 polls the Google Script and updates the LEDs based on the calendar events.  The functionality is divided into:
