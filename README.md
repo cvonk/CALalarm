@@ -18,6 +18,8 @@ h
 
 ## Usage
 
+The software relies on the master ESP-IDF SDK version v4.3-dev-472-gcf056a7d0 and accompanying tools.
+
 Clone the repository
 ```
 git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock-Sander.git
