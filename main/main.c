@@ -23,7 +23,7 @@
 #include <esp_ota_ops.h>
 #include <ota_update_task.h>
 
-//#include "factory_reset_task.h"
+#include "factory_reset_task.h"
 #include "http_post_server.h"
 #include "https_client_task.h"
 #include "display_task.h"
@@ -163,7 +163,7 @@ void
 app_main()
 {
     ESP_LOGI(TAG, "starting ..");
-    //xTaskCreate(&factory_reset_task, "factory_reset_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&factory_reset_task, "factory_reset_task", 4096, NULL, 5, NULL);
 
     _initNvsFlash();
 

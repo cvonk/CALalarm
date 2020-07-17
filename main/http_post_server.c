@@ -8,9 +8,6 @@
  **/
 
 #include <string.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
 #include <esp_wifi.h>
 #include <esp_event.h>
 #include <esp_log.h>
@@ -20,6 +17,9 @@
 #include <esp_netif.h>
 #include <esp_tls.h>
 #include <esp_http_server.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
 
 #include "http_post_server.h"
 #include "ipc_msgs.h"

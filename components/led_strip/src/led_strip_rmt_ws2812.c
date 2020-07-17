@@ -16,8 +16,9 @@
 #include <sys/cdefs.h>
 #include "esp_log.h"
 #include "esp_attr.h"
-#include "led_strip.h"
 #include "driver/rmt.h"
+
+#include "led_strip.h"
 
 static const char *TAG = "ws2812";
 #define STRIP_CHECK(a, str, goto_tag, ret_value, ...)                             \
