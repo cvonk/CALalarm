@@ -2,21 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "show $IDF_PATH",
-            "type": "shell",
-            "command": "echo",
-            "args": [
-                "=${env:IDF_PATH}=",
-                "=${env:PATH}="
-            ],
-            "options": {
-                "env": {
-                    "PATH": "${config:idf.customExtraPaths}"
-                }
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "Build - Build project",
             "type": "shell",
             "command": "${config:idf.pythonBinPath} ${config:idf.espIdfPath}/tools/idf.py build",
@@ -59,7 +44,7 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": true
+                "isDefault": false
             }
         },
         {
@@ -178,7 +163,11 @@
             "dependsOn": "Flash - Flash the device",
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "OpenOCD: Start openOCD",

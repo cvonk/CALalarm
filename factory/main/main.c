@@ -19,11 +19,9 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
-#include <lwip/err.h>
-#include <lwip/sys.h>
 
 #include "ble_prov.h"
-#include "ota_task.h"
+#include "ota_update_task.h"
 
 /**
  * _ble_device_name_prefix and BLE_PROV_POP must match build.gradle in the android app;
@@ -115,7 +113,7 @@ _handle_sta_got_ip(void * arg, esp_event_base_t event_base,
     ESP_LOGI(TAG, "IP addr " IPSTR, IP2STR(&event->ip_info.ip));
     _retry_num.ap_not_found = _retry_num.ap_auth_fail = 0;
 
-    xTaskCreate(&ota_task, "ota_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&ota_update_task, "ota_update_task", 8192, NULL, 5, NULL);
 }
 
 static void
