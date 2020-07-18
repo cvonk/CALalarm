@@ -7,12 +7,8 @@
  * All text above must be included in any redistribution
 **/
 
-#include <sdkconfig.h>
 #include <stdio.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/event_groups.h>
-#include <freertos/queue.h>
+#include <sdkconfig.h>
 #include <esp_system.h>
 #include <esp_wifi.h>
 #include <esp_event.h>
@@ -21,6 +17,10 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <esp_ota_ops.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/event_groups.h>
+#include <freertos/queue.h>
 #include <ota_update_task.h>
 
 #include "factory_reset_task.h"
