@@ -14,3 +14,7 @@
 	path = factory/components/factory_ble_prov
 	url = https://github.com/cvonk/ESP32_factory-ble-prov.git
 	branch = master
+[submodule "components/wifi_connect"]
+	path = components/wifi_connect
+	url = https://github.com/cvonk/ESP32_wifi-connect.git
+	branch = master
