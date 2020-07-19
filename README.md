@@ -35,7 +35,7 @@ The functionality is divided into:
 - `Display Task`, that uses the Remote Control Module on the ESP32 to drive the LED strip.
 - `HTTP POST Server`, to listen to push notifications from Google.
 - `OTA Task`, that check for updates upon reboot
-- `Reset Task`, when GPIO#0 is low for 3 seconds, it erases the WiFi credentials so that the board can be reprovisioned using your phone.
+- `Reset Task`, when GPIO#0 is low for 3 seconds, it erases the WiFi credentials so that the board can be re-provisioned using your phone.
 
 The different parts communicate using FreeRTOS mailboxes.
 
@@ -43,10 +43,11 @@ The different parts communicate using FreeRTOS mailboxes.
 
 The Git repository contains submodules.  To clone these submodules as well, use the `--recursive` flag.
 ```
-git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock-Sander
+git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock
+cd ESP32_Calendar-clock
 git submodule init
-cp main/Kconfig-example.projbuild main/Kconfig.projbuild
-cp components/ota_update_task/Kconfig-example components/ota_update_task/Kconfig
+copy main\Kconfig-example main\Kconfig
+copy components\ota_update_task\Kconfig.example components\ota_update_task\Kconfig
 ```
 
 Update using
@@ -56,7 +57,7 @@ git submodule update --recursive --remote
 ```
 
 ### Bill of Materials
-
+Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as a artsy-backlight.
 ![Internals of Backward facing glass clock with LED circle](media/forward_facing_int.jpg)
 ![Internals of Forward facing glass clock with LED circle](media/backward_facing_int.jpg)
 
@@ -65,13 +66,14 @@ git submodule update --recursive --remote
 - 5 Volt, 3 Amp power adapter
 - Capacitor (470 uF / 16V)
 - Resistor (470 Ohm)
-- Analog clock with glass face plate (e.g. Tempus TC6065S Wall Clock with Glass Metal Frame)
+- Analog clock with glass face plate (e.g. Tempus TC6065S Wall Clock with Glass Metal Frame or a Selko 11" Brushed Metal Wall Clock)
 - Optional frosting spray (e.g.  Rust-Oleum Frosted Glass Spray Paint)
 - Glass glue (e.g. Loctite Glass Glue)
+- Molex 2 Pin Connectors
 
 The Data-in of the LED circle should be driven with 5V +/- 0.5V, but we seem to get away with using the 3.3V output from ESP32 with 470 Ohms in series. To be safe, you should use a level shifter.
 
-The software is a symbiosis betweeen a Google Apps Script and firmware running on the ESP32.  The script reads events from your Google Calendar and presents them as JSON to the ESP32 device.
+The software is a symbiosis between a Google Apps Script and firmware running on the ESP32.  The script reads events from your Google Calendar and presents them as JSON to the ESP32 device.
 
 ### System Development Kit (SDK)
 
@@ -99,7 +101,7 @@ The firmware loads in two stages:
   1. `factory.bin` configures the WiFi using phone app (except when WiFi credentials are hard code in `Kconfig.projbuild`)
   2. `calclock.bin`, the main application
 
-Compile `calclock.bin` first, by opening the folder in Microsft Visual Code and starting the build (`ctrl-e b`).
+Compile `calclock.bin` first, by opening the folder in Microsoft Visual Code and starting the build (`ctrl-e b`).
 
 When using OTA updates, the resulting `build/calclock.bin` should be copied to the OTA Update file server (pointed to by `OTA_UPDATE_FIRMWARE_URL`).
 
@@ -180,7 +182,7 @@ The second requirement is met by `http_post_server.c`.  Note that the reverse pr
 
 The last requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`
 
-To give the script the nescesary permissions, we need to switch it /default/ GCP to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
+To give the script the necessary permissions, we need to switch it /default/ GCP to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
   - in this Google Script > Resources > Cloud Platform project > associate with (new) Cloud project
   - in Google Cloud Console for that (new) project > OAuth consent screen > make internal, add scope = Google Calendar API ../auth/calendar.readonly
   - in Google Developers Console > select your project > domain verification > add domain > ..
