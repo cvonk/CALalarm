@@ -11,7 +11,6 @@
 #include <sdkconfig.h>
 #include <esp_system.h>
 #include <esp_wifi.h>
-#include <esp_event.h>
 #include <esp_log.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
@@ -19,11 +18,11 @@
 #include <esp_ota_ops.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/event_groups.h>
 #include <freertos/queue.h>
 #include <ota_update_task.h>
+#include <wifi_connect.h>
 
-#include "factory_reset_task.h"
+#include <factory_reset_task.h>
 #include "http_post_server.h"
 #include "https_client_task.h"
 #include "display_task.h"
@@ -36,15 +35,6 @@
 #define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
 
 static char const * const TAG = "main_app";
-static EventGroupHandle_t _wifi_event_group;
-typedef enum {
-    WIFI_EVENT_CONNECTED = BIT0
-} my_wifi_event_t;
-
-typedef struct event_handler_arg_t {
-    ipc_t * ipc;
-    httpd_handle_t server;
-} event_handler_arg_t;
 
 static void
 _initNvsFlash(void)
@@ -79,13 +69,27 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 			 mac[WIFI_DEVMAC_LEN-2], mac[WIFI_DEVMAC_LEN-1]);
 }
 
+static void
+_wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
+{
+    ipc_t * const ipc = priv_void;
+    ipc->dev.connectCnt.wifi++;
+    snprintf(ipc->dev.name, WIFI_DEVNAME_LEN, IPSTR, IP2STR(ip));
+
+    uint8_t mac[WIFI_DEVMAC_LEN];
+    ESP_ERROR_CHECK(esp_base_mac_addr_get(mac));
+	_mac2devname(mac, ipc->dev.name, WIFI_DEVNAME_LEN);
+
+    ESP_LOGI(TAG, "%s / %s / %u", ipc->dev.ipAddr, ipc->dev.name, ipc->dev.connectCnt.wifi);
+}
+
 void
 app_main()
 {
+    _initNvsFlash();
+
     ESP_LOGI(TAG, "starting ..");
     xTaskCreate(&factory_reset_task, "factory_reset_task", 4096, NULL, 5, NULL);
-
-    _initNvsFlash();
 
     static ipc_t ipc;
     ipc.toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
@@ -95,11 +99,13 @@ app_main()
     ipc.dev.connectCnt.mqtt = 0;
     assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
 
-    _connect2wifi(&ipc);  // waits for connection established
-
-    uint8_t mac[WIFI_DEVMAC_LEN];
-    ESP_ERROR_CHECK(esp_base_mac_addr_get(mac));
-	_mac2devname(mac, ipc.dev.name, WIFI_DEVNAME_LEN);
+    wifi_connect_config_t wifi_connect_config = {
+        .onConnect = _wifi_connect_cb,
+        .priv = &ipc,
+    };
+    if (wifi_connect(&wifi_connect_config) != ESP_OK) {
+        // should switch to factory partition for provisioning
+    }
 
     // from here the tasks take over
 

@@ -1,12 +1,12 @@
 menu "Clock - main"
 
-    config WIFI_SSID
+    config WIFI_CONNECT_SSID
         string "WiFi SSID"
         default ""
         help
             SSID (network name). Leave empty for BLE provisioning.
 
-    config WIFI_PASSWD
+    config WIFI_CONNECT_PASSWD
         string "WiFi Password"
         default ""
         help
