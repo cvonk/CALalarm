@@ -44,6 +44,8 @@ The Git repository contains submodules.  To clone these submodules as well, use 
 ```
 git clone --recursive https://github.com/sandervonk/ESP32_Calendar-clock-Sander
 git submodule init
+cp main/Kconfig-example.projbuild main/Kconfig.projbuild
+cp components/ota_update_task/Kconfig-example components/ota_update_task/Kconfig
 ```
 
 Update using
@@ -83,9 +85,8 @@ In the main directory, copy `Kconfig-example.projbuild` to `Kconfig.projbuild`. 
 
 ### Configure
 
-1. Copy `main/Kconfig-example.projbuild` to `main/Kconfig.projbuild`.
-2. Either update the defaults in the `Kconfig.projbuild` file directly, or use the "ESP-IDF: launch gui configuration tool".
-3. Delete `sdkconfig` so the build system will recreate it.
+1. Either update the defaults in the `Kconfig.projbuild` file directly, or use the "ESP-IDF: launch gui configuration tool".
+2. Delete `sdkconfig` so the build system will recreate it.
 
 ### Build
 

@@ -74,7 +74,7 @@ _wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
 {
     ipc_t * const ipc = priv_void;
     ipc->dev.connectCnt.wifi++;
-    snprintf(ipc->dev.name, WIFI_DEVNAME_LEN, IPSTR, IP2STR(ip));
+    snprintf(ipc->dev.ipAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(ip));
 
     uint8_t mac[WIFI_DEVMAC_LEN];
     ESP_ERROR_CHECK(esp_base_mac_addr_get(mac));
