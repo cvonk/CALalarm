@@ -84,13 +84,9 @@ _wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
 }
 
 static void
-_wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
+_wifi_disconnect_cb(void * const priv_void, bool const auth_err)
 {
-    ipc_t * const ipc = priv_void;
-    ipc->dev.connectCnt.wifi++;
-    snprintf(ipc->dev.ipAddr, WIFI_DEVIPADDR_LEN, IPSTR, IP2STR(ip));
-
-    ESP_LOGI(TAG, "%s / %u", ipc->dev.ipAddr, ipc->dev.connectCnt.wifi);
+    // should probably reprovision on repeated auth_err
 }
 
 static void
@@ -98,6 +94,7 @@ _connect2wifi(ipc_t * const ipc)
 {
     wifi_connect_config_t wifi_connect_config = {
         .onConnect = _wifi_connect_cb,
+        .onDisconnect = _wifi_disconnect_cb,
         .priv = ipc,
     };
     ESP_ERROR_CHECK(wifi_connect_init(&wifi_connect_config));
@@ -105,7 +102,7 @@ _connect2wifi(ipc_t * const ipc)
 #if defined(CONFIG_WIFI_CONNECT_SSID) && defined(CONFIG_WIFI_CONNECT_PASSWD)
     if (strlen(CONFIG_WIFI_CONNECT_SSID)) {
         ESP_LOGW(TAG, "Using SSID from Kconfig");
-        wifi_config_t const wifi_config = {
+        wifi_config_t wifi_config = {
             .sta = {
                 .ssid = CONFIG_WIFI_CONNECT_SSID,
                 .password = CONFIG_WIFI_CONNECT_PASSWD,
