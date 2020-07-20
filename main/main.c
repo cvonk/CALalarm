@@ -69,7 +69,7 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 			 mac[WIFI_DEVMAC_LEN-2], mac[WIFI_DEVMAC_LEN-1]);
 }
 
-static void
+static esp_err_t
 _wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
 {
     ipc_t * const ipc = priv_void;
@@ -81,12 +81,14 @@ _wifi_connect_cb(void * const priv_void, esp_ip4_addr_t const * const ip)
 	_mac2devname(mac, ipc->dev.name, WIFI_DEVNAME_LEN);
 
     ESP_LOGI(TAG, "%s / %s / %u", ipc->dev.ipAddr, ipc->dev.name, ipc->dev.connectCnt.wifi);
+    return ESP_OK;
 }
 
-static void
+static esp_err_t
 _wifi_disconnect_cb(void * const priv_void, bool const auth_err)
 {
     // should probably reprovision on repeated auth_err
+    return ESP_OK;
 }
 
 static void
