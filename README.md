@@ -20,15 +20,28 @@ I used this to remind me of upcoming appointments now that school moved online.
 - Optional remote restart, and version information (using MQTT)
 - Optional core dump over MQTT to aid debugging
 
-## Google apps script
+## Google Apps Script
 
-The ESP32 polls the Google Script and updates the LEDs based on the calendar events.  (Push notifications are described at the end of this document.)
+The ESP32 microcontroller calls a [Google Apps Script](https://developers.google.com/apps-script/guides/web) that retrieve a list of upcoming events from your calendar and returns them as a JSON object.  As we see later, the ESP32 will update the LEDs based on this JSON object.
 
-See `script\doGet.gs`
+To create the Webapp:
+  - Create a new project on [script.google.com](https://script.google.com);
+  - Copy and paste the code from `script\Code.gs`
+  - Resources > Advanced Google Services > enable the `Calendar API`
+  - File > Manage Versions, Save New Version
+  - Publish > Deploy as web app
+      - version = select the version you just saved
+      - execute as = `Me`
+      - who has access = `anyone`, even anonymous (make sure you understand what the script does!)
+      - You will get a warning, because the app has not been verified by Google
+      - Once you clock `Deploy`, it presents you with two URLs
+          - one that ends in `/exec`, the published version, based on the version you chose.
+          - one that ends in `/dev`, the most recent saved code, intended for quick testing during development.
+      - Copy the `main/Kconfig.example` to `main/Kconfig` and copy the URL that ends in `/exec` to `main/Kconfig` under `CLOCK_GAS_CALENDAR_URL`.
 
-The Google Apps Script provides a means of accessing and then grabbing upcoming events from your calendar, then lightly fliltering them before sending the back via the webapp to the C code. This is accoplished with the Google Calendar API. Also part of this script is the push notification system, which is set up through Google Cloud and allows the Clock to update almost instantally when events are added, removed, or changed
+The script is more involved as needed because also supports /Push Notifications/, as described at the end of this document.
 
-## Getting started
+## ESP32 Firmware
 
 The functionality is divided into:
 - `HTTPS Client Task`, that polls the Google Apps Script for calendar events
@@ -57,6 +70,7 @@ git submodule update --recursive --remote
 ```
 
 ### Bill of Materials
+
 Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as a artsy-backlight.
 ![Internals of Backward facing glass clock with LED circle](media/forward_facing_int.jpg)
 ![Internals of Forward facing glass clock with LED circle](media/backward_facing_int.jpg)
@@ -180,12 +194,17 @@ For the first requirement, the Google push notification need to be able to trave
 
 The second requirement is met by `http_post_server.c`.  Note that the reverse proxy forwards the HTTPS request from Google as HTTP to the device.
 
-The last requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`
+The last requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`.
 
-To give the script the necessary permissions, we need to switch it /default/ GCP to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
-  - in this Google Script > Resources > Cloud Platform project > associate with (new) Cloud project
-  - in Google Cloud Console for that (new) project > OAuth consent screen > make internal, add scope = Google Calendar API ../auth/calendar.readonly
-  - in Google Developers Console > select your project > domain verification > add domain > ..
+To give the script the necessary permissions, we need to switch it from /default/ GCP (Apps Script–managed Cloud Platform project) to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
+  - in [Google Script](https://script.google.com/) > Resources > Cloud Platform project > associate with (new) Cloud project number
+      - it will ask you to configure an OAuth consent screen
+  - in Google Cloud Console for that (new) project > OAuth consent screen
+      - select `External`
+      - add scope = Google Calendar API ()../auth/calendar.readonly)
+      - press `Save` (not submit)
+  - In that same Google Clouse Console UI
+      - on the left, domain verification > add/allow domain > add the external domain for your ESP32.
 
 ## Feedback
 

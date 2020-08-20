@@ -24,9 +24,16 @@ menu "Clock - main"
         help
             Number of WS2812 pixels on LED circle
 
+    config CLOCK_GAS_INTERVAL
+        int "Polling interval for Google Apps Script"
+        default 2
+        help
+            Number of minutes between polling the calendar events using Google Apps Script.
+            When using push notifications this can be as high as e.g. 60 minutes.
+
     config CLOCK_GAS_CALENDAR_URL
         string "Google script uri"
-        default "https://script.google.com/macros/s/SCRIPTID/exec"
+        default "https://script.google.com/macros/s/YOUR_UNIQ_KEY/exec"
         help
             Public URL of the Google Apps script that supplies JSON of the
             calendar events.
@@ -35,17 +42,17 @@ menu "Clock - main"
         string "MQTT broker uri"
         default "calclock/data"
         help
-            MQTT topic for iBeacons received over BLE
+            MQTT topic for messages from the ESP32
 
     config CLOCK_MQTT_CTRL_TOPIC
         string "MQTT broker uri"
         default "calclock/ctrl"
         help
-            MQTT topic for control messages
+            MQTT topic for messages to the ESP32
 
     config CLOCK_MQTT_URL
         string "MQTT broker uri"
-        default "mqtt://user:passwd@mqtt.vonk:1883"
+        default "mqtt://user:passwd@host.domain:1883"
         help
             URL of the MQTT broker.  For authentication include the username
             and password.
