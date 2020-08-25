@@ -8,8 +8,8 @@ It can be used as anything from a decorative/interactive art piece to a normal c
 
 I used this to remind me of upcoming appointments now that school moved online.
 
-![Backward facing glass clock with LED circle](media/forward_facing.jpg)
-![Forward facing glass clock with LED circle](media/backward_facing.jpg)
+![Backward facing glass clock with LED circle](media/forward_facing_250px.jpg)
+![Forward facing glass clock with LED circle](media/backward_facing_250px.jpg)
 
 ## Features:
 
@@ -72,8 +72,8 @@ git submodule update --recursive --remote
 ### Bill of Materials
 
 Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as a artsy-backlight.
-![Internals of Backward facing glass clock with LED circle](media/forward_facing_int.jpg)
-![Internals of Forward facing glass clock with LED circle](media/backward_facing_int.jpg)
+![Internals of Backward facing glass clock with LED circle](media/forward_facing_int_250px.jpg)
+![Internals of Forward facing glass clock with LED circle](media/backward_facing_int_250px.jpg)
 
 - RGB LED Pixel Ring containing 60 WS2812B SMD5050 addressable LEDs (e.g. "Chinly Addressable 60 Pixel LED Ring").  These WS2812B pixels are 5V, and draw about 60 mA each at full brightness.  If you plan to use it in a bedroom, you probably want less bright LEDS such as WS2812 (without the "B").
 - ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32 or MELIFE ESP32.
