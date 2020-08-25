@@ -1,4 +1,4 @@
-# ESP32 Calender Clock
+# ESP32 Calendar Clock
 
 [![LICENSE](https://img.shields.io/github/license/jvonk/pact)](LICENSE)
 
