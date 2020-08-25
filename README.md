@@ -71,7 +71,8 @@ git submodule update --recursive --remote
 
 ### Bill of Materials
 
-Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as a artsy-backlight.
+Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as an artsy-backlight.
+
 ![Internals of Backward facing glass clock with LED circle](media/forward_facing_int_250px.jpg)
 ![Internals of Forward facing glass clock with LED circle](media/backward_facing_int_250px.jpg)
 
