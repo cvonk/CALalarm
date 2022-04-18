@@ -1,6 +1,8 @@
 # ESP32 Calendar Clock
 
-[![LICENSE](https://img.shields.io/github/license/jvonk/pact)](LICENSE)
+[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/ESP32_Calendar-clock-Sander)](https://github.com/cvonk/ESP32_Calendar-clock-Sander/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/ESP32_Calendar-clock-Sander?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/cvonk/ESP32_Calendar-clock-Sander)
 
 This program runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
 
@@ -209,27 +211,4 @@ To give the script the necessary permissions, we need to switch it from /default
 
 ## Feedback
 
-I love to hear from you.  Please use the Github channels to provide feedback.
-
-## License
-
-Copyright (c) 2020 Sander and Coert Vonk
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
-OR OTHER DEALINGS IN THE SOFTWARE.
-
+We love to hear from you.  Please use the Github discussions to provide feedback.
