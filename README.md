@@ -1,8 +1,8 @@
 # ESP32 Calendar Clock
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/ESP32_Calendar-clock-Sander)](https://github.com/cvonk/ESP32_Calendar-clock-Sander/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/ESP32_Calendar-clock-Sander?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub](https://img.shields.io/github/license/cvonk/ESP32_Calendar-clock-Sander)
+[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/ESP32_Calendar-clock)](https://github.com/sandervonk/ESP32_Calendar-clock/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/ESP32_Calendar-clock?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/sandervonk/ESP32_Calendar-clock)
 
 This program runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
 
