@@ -4,6 +4,7 @@
   "idf.adapterTargetName": "esp32",
   "cmake.configureOnOpen": false,
   "files.associations": {
-    "*.inc": "c"
+    "*.inc": "c",
+    "event_groups.h": "c"
   }
 }
