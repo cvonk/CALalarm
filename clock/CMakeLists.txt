@@ -1,3 +1,4 @@
-set(COMPONENT_SRCS main.c http_post_server.c https_client_task.c display_task.c mqtt_task.c)
-set(COMPONENT_ADD_INCLUDEDIRS .)
-register_component()
+cmake_minimum_required(VERSION 3.5)
+set(EXTRA_COMPONENT_DIRS ../components)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(clock)

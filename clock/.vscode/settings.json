@@ -3,7 +3,8 @@
   "files.associations": {
     "*.tcc": "c",
     "typeinfo": "cpp",
-    "network.h": "c"
+    "network.h": "c",
+    "https_client_task.h": "c"
   },
   "idf.portWin": "COM7",
   "idf.adapterTargetName": "esp32",

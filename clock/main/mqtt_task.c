@@ -4,12 +4,10 @@
 // Copyright © 2020, Coert Vonk
 // SPDX-License-Identifier: MIT
 
-#include <sdkconfig.h>
-#include <stdlib.h>
 #include <string.h>
+#include <esp_system.h>
 #include <esp_event.h>
 #include <esp_log.h>
-#include <esp_system.h>
 #include <esp_wifi.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
@@ -18,10 +16,11 @@
 #include <mqtt_client.h>
 #include <esp_ota_ops.h>
 #include <esp_core_dump.h>
-#include <esp_flash.h>
+#include <nvs_flash.h>
+#include <nvs.h>
 
+#include "ipc/ipc.h"
 #include "mqtt_task.h"
-#include "ipc_msgs.h"
 #include "coredump_to_server.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -79,7 +78,7 @@ _forwardCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
     coredump_priv_t priv = {
         .client = client,
     };
-    asprintf(&priv.topic, "%s/coredump/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+    asprintf(&priv.topic, "%s/coredump/%s", CONFIG_OPNCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
     coredump_to_server_config_t coredump_cfg = {
         .start = NULL,
         .end = NULL,
@@ -156,19 +155,42 @@ _mqttEventHandler(esp_mqtt_event_handle_t event) {
 static esp_mqtt_client_handle_t
 _connect2broker(ipc_t const * const ipc) {
 
+    char * mqtt_url = NULL;
+
+#ifdef CONFIG_OPNPOOL_HARDCODED_MQTT_CREDENTIALS
+    ESP_LOGW(TAG, "Using mqtt_url from Kconfig");
+    mqtt_url = strdup(CONFIG_OPNPOOL_HARDCODED_MQTT_URL);
+#else
+    ESP_LOGW(TAG, "Using mqtt_url from nvram");
+    nvs_handle_t nvs_handle;
+    size_t len;
+    if (nvs_open("storage", NVS_READONLY, &nvs_handle) == ESP_OK &&
+        nvs_get_str(nvs_handle, "mqtt_url", NULL, &len) == ESP_OK) {
+            
+        mqtt_url = (char *) malloc(len);
+        ESP_ERROR_CHECK(nvs_get_str(nvs_handle, "mqtt_url", mqtt_url, &len));
+    }
+#endif
+    if (mqtt_url == NULL || *mqtt_url == '\0') {
+        return NULL;
+    }
+
+    ESP_LOGW(TAG, "read mqtt_url (%s)", mqtt_url);
+
     esp_mqtt_client_handle_t client;
     xEventGroupClearBits(_mqttEventGrp, MQTT_EVENT_CONNECTED_BIT);
     {
         const esp_mqtt_client_config_t mqtt_cfg = {
             .event_handle = _mqttEventHandler,
-            .user_context = (void *)ipc,
-            .uri = CONFIG_CLOCK_MQTT_URL,
+            .user_context = (void *) ipc,
+            .uri = mqtt_url
         };
         client = esp_mqtt_client_init(&mqtt_cfg);
-        //ESP_ERROR_CHECK(esp_mqtt_client_set_uri(client, CONFIG_CLOCK_MQTT_URL));
+        //ESP_ERROR_CHECK(esp_mqtt_client_set_uri(client, CONFIG_POOL_MQTT_URL));
         ESP_ERROR_CHECK(esp_mqtt_client_start(client));
     }
 	assert(xEventGroupWaitBits(_mqttEventGrp, MQTT_EVENT_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY));
+    free(mqtt_url);
     return client;
 }
 
@@ -216,7 +238,7 @@ _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
     ESP_LOGI(TAG, "Coredump is %u bytes", coredump_size);
 
     char * topic;
-    asprintf(&topic, "%s/coredump/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+    asprintf(&topic, "%s/coredump/%s", CONFIG_OPNCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
 
     for (size_t offset = 0; offset < coredump_size; offset += chunk_len) {
 
@@ -271,11 +293,11 @@ mqtt_task(void * ipc_void) {
     ESP_LOGI(TAG, "starting ..");
 	ipc_t * ipc = ipc_void;
 
-    _topic.ctrl      = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
-    _topic.ctrlGroup = malloc(strlen(CONFIG_CLOCK_MQTT_CTRL_TOPIC) + 1);
+    _topic.ctrl      = malloc(strlen(CONFIG_OPNCLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
+    _topic.ctrlGroup = malloc(strlen(CONFIG_OPNCLOCK_MQTT_CTRL_TOPIC) + 1);
     assert(_topic.ctrl && _topic.ctrlGroup);
-    sprintf(_topic.ctrl, "%s/%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC, ipc->dev.name);
-    sprintf(_topic.ctrlGroup, "%s", CONFIG_CLOCK_MQTT_CTRL_TOPIC);
+    sprintf(_topic.ctrl, "%s/%s", CONFIG_OPNCLOCK_MQTT_CTRL_TOPIC, ipc->dev.name);
+    sprintf(_topic.ctrlGroup, "%s", CONFIG_OPNCLOCK_MQTT_CTRL_TOPIC);
 
 	_mqttEventGrp = xEventGroupCreate();
     esp_mqtt_client_handle_t const client = _connect2broker(ipc);
@@ -289,9 +311,9 @@ mqtt_task(void * ipc_void) {
             char * topic;
             char const * const subtopic = _type2subtopic(msg.dataType);
             if (subtopic) {
-                asprintf(&topic, "%s/%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, subtopic, ipc->dev.name);
+                asprintf(&topic, "%s/%s/%s", CONFIG_OPNCLOCK_MQTT_DATA_TOPIC, subtopic, ipc->dev.name);
             } else {
-                asprintf(&topic, "%s/%s", CONFIG_CLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+                asprintf(&topic, "%s/%s", CONFIG_OPNCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
             }
             esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
             free(topic);
