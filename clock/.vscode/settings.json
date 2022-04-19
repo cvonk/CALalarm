@@ -1,0 +1,11 @@
+{
+  "cmake.cmakePath": "C:/espressif/bin/tools/cmake/3.20.3/bin/cmake",
+  "files.associations": {
+    "*.tcc": "c",
+    "typeinfo": "cpp",
+    "network.h": "c"
+  },
+  "idf.portWin": "COM7",
+  "idf.adapterTargetName": "esp32",
+  "cmake.configureOnOpen": false
+}
