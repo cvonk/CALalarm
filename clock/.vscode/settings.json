@@ -13,5 +13,6 @@
     "idf.toolsPathWin": "C:/espressif/bin",
     "files.associations": {
         "esp_http_server.h": "c"
-    }
+    },
+    "cmake.configureOnOpen": false
 }
