@@ -11,5 +11,8 @@
     "idf.portWin": "COM8",
     "idf.pythonBinPathWin": "C:/espressif/bin/python_env/idf4.4_py3.8_env/Scripts/python.exe",
     "idf.toolsPathWin": "C:/espressif/bin",
+    "files.associations": {
+        "esp_http_server.h": "c"
+    },
     "cmake.configureOnOpen": false
 }

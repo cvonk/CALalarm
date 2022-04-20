@@ -1,11 +1,15 @@
-config WIFI_CONNECT_SSID
-    string "WiFi SSID"
-    default ""
-    help
-        SSID (network name). Leave empty for BLE provisioning.
+menu "CalendarClock"
 
-config WIFI_CONNECT_PASSWD
-    string "WiFi Password"
-    default ""
-    help
-        WiFi password (WPA or WPA2). Leave empty for BLE provisioning.
+    config OTA_UPDATE_FIRMWARE_URL
+        string "Firmware upgrade url endpoint"
+        default "http://host:80/path/to/clock.bin"
+        help
+            URL of server which hosts the firmware image. (make sure it matches Kconfig in clock dir)
+
+    config OTA_UPDATE_RECV_TIMEOUT
+        int "OTA Update receive Timeout"
+        default 5000
+        help
+            Maximum time for reception [sec]
+
+endmenu

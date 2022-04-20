@@ -29,7 +29,7 @@
 #include <cJSON.h>
 
 #include "https_client_task.h"
-#include "ipc_msgs.h"
+#include "../ipc/ipc.h"
 
 static const char * TAG = "https_client_task";
 static char * _data = NULL;
@@ -98,7 +98,7 @@ https_client_task(void * ipc_void)
     while (1) {
 
         char * url;
-        assert(asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) >= 0);
+        assert(asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_OPNCLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) >= 0);
         ESP_LOGI(TAG, "url = \"%s\"", url);
 
         esp_http_client_config_t config = {
@@ -114,7 +114,7 @@ https_client_task(void * ipc_void)
             ESP_LOGI(TAG, "status = %d, _data_len = %d", status, _data_len);
             if (status == 200) {
                 _data[_data_len] = '\0';
-                ESP_LOGI(TAG, "\"%s\"", _data);
+                ESP_LOGI(TAG, "rx \"%s\"", _data);
                 sendToMqtt(TO_MQTT_MSGTYPE_DBG, _data, ipc);
                 sendToDisplay(TO_DISPLAY_MSGTYPE_JSON, _data, ipc);
                 _json2pushId(_data, pushId, pushId_len);
@@ -125,7 +125,7 @@ https_client_task(void * ipc_void)
 
         bool const pushActive = strlen(pushId);
         uint const pushServiceDuration = 60;  // max push notification service duration is 1 hr
-        int const minPerPxl = 12 * 60 / CONFIG_CLOCK_WS2812_COUNT;
+        int const minPerPxl = 12 * 60 / CONFIG_OPNCLOCK_WS2812_COUNT;
 
         uint const waitMinutes = pushActive ? pushServiceDuration : minPerPxl;
         toClientMsg_t msg;

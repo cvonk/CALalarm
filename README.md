@@ -1,6 +1,8 @@
 # ESP32 Calendar Clock
 
-[![LICENSE](https://img.shields.io/github/license/jvonk/pact)](LICENSE)
+[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/ESP32_Calendar-clock)](https://github.com/sandervonk/ESP32_Calendar-clock/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/ESP32_Calendar-clock?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/sandervonk/ESP32_Calendar-clock)
 
 This program runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
 
@@ -187,15 +189,11 @@ where `#` is a the MQTT wildcard character.
 To improve response time we have the option of using the [Push Notifications API](https://developers.google.com/calendar/v3/push):
 > Allows you to improve the response time of your application. It allows you to eliminate the extra network and compute costs involved with polling resources to determine if they have changed. Whenever a watched resource changes, the Google Calendar API notifies your application.
 > To use push notifications, you need to do three things:
-> 1. Register the domain of your receiving URL.
-> 2. Set up your receiving URL, or "Webhook" callback receiver.
-> 3. Set up a notification channel for each resource endpoint you want to watch.
+> 1. Set up your receiving URL, or "Webhook" callback receiver.
+> 2. Set up a notification channel for each resource endpoint you want to watch.
 
-For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy.  Please refer to [Traversing your access router](https://coertvonk.com/sw/embedded/turning-on-the-light-the-hard-way-26806#traverse) for more details.  On the Google Console end, visit APIs and Services > Domain Verification > Add domain.
-
-The second requirement is met by `http_post_server.c`.  Note that the reverse proxy forwards the HTTPS request from Google as HTTP to the device.
-
-The last requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`.
+For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy. This implies you need to configure a reverse proxy (Nginx or Pound) on your router. Setup this reverse proxy so that it forwards HTTPS request from Google as HTTP to the device.  On the device, the module `http_post_server.c` is the endpoint for these push notifications.  
+The second requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`.
 
 To give the script the necessary permissions, we need to switch it from /default/ GCP (Apps Script–managed Cloud Platform project) to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
   - in [Google Script](https://script.google.com/) > Resources > Cloud Platform project > associate with (new) Cloud project number
@@ -209,27 +207,4 @@ To give the script the necessary permissions, we need to switch it from /default
 
 ## Feedback
 
-I love to hear from you.  Please use the Github channels to provide feedback.
-
-## License
-
-Copyright (c) 2020 Sander and Coert Vonk
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
-OR OTHER DEALINGS IN THE SOFTWARE.
-
+We love to hear from you.  Please use the Github discussions to provide feedback.
