@@ -157,9 +157,9 @@ _connect2broker(ipc_t const * const ipc) {
 
     char * mqtt_url = NULL;
 
-#ifdef CONFIG_OPNPOOL_HARDCODED_MQTT_CREDENTIALS
+#ifdef CONFIG_OPNCLOCK_HARDCODED_MQTT_CREDENTIALS
     ESP_LOGW(TAG, "Using mqtt_url from Kconfig");
-    mqtt_url = strdup(CONFIG_OPNPOOL_HARDCODED_MQTT_URL);
+    mqtt_url = strdup(CONFIG_OPNCLOCK_HARDCODED_MQTT_URL);
 #else
     ESP_LOGW(TAG, "Using mqtt_url from nvram");
     nvs_handle_t nvs_handle;

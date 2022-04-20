@@ -2,7 +2,7 @@ menu "CalendarClock"
 
     config OTA_UPDATE_FIRMWARE_URL
         string "Firmware upgrade url endpoint"
-        default "http://coertvonk.com/svonk/clock/clock.bin"
+        default "http://coertvonk.com/svonk/opnclock/clock.bin"
         help
             URL of server which hosts the firmware image. (make sure it matches Kconfig in clock dir)
 

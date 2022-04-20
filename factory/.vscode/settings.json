@@ -1,10 +1,14 @@
 {
-  "cmake.cmakePath": "C:/espressif/bin/tools/cmake/3.20.3/bin/cmake",
-  "idf.portWin": "COM6",
-  "idf.adapterTargetName": "esp32",
-  "cmake.configureOnOpen": false,
-  "files.associations": {
-    "*.inc": "c",
-    "event_groups.h": "c"
-  }
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
+    "idf.adapterTargetName": "esp32",
+    "idf.customExtraPaths": "C:/espressif/bin/tools/xtensa-esp32-elf/esp-2021r2-patch2-8.4.0/xtensa-esp32-elf/bin;C:/espressif/bin/tools/xtensa-esp32s2-elf/esp-2021r2-patch2-8.4.0/xtensa-esp32s2-elf/bin;C:/espressif/bin/tools/xtensa-esp32s3-elf/esp-2021r2-patch2-8.4.0/xtensa-esp32s3-elf/bin;C:/espressif/bin/tools/riscv32-esp-elf/esp-2021r2-patch2-8.4.0/riscv32-esp-elf/bin;C:/espressif/bin/tools/esp32ulp-elf/2.28.51-esp-20191205/esp32ulp-elf-binutils/bin;C:/espressif/bin/tools/esp32s2ulp-elf/2.28.51-esp-20191205/esp32s2ulp-elf-binutils/bin;C:/espressif/bin/tools/cmake/3.20.3/bin;C:/espressif/bin/tools/openocd-esp32/v0.11.0-esp32-20211220/openocd-esp32/bin;C:/espressif/bin/tools/ninja/1.10.2;C:/espressif/bin/tools/idf-exe/1.0.3;C:/espressif/bin/tools/ccache/4.3/ccache-4.3-windows-64;C:/espressif/bin/tools/dfu-util/0.9/dfu-util-0.9-win64",
+    "idf.customExtraVars": "{\"OPENOCD_SCRIPTS\":\"C://espressif//bin//tools//openocd-esp32//v0.11.0-esp32-20211220/openocd-esp32/share/openocd/scripts\",\"IDF_CCACHE_ENABLE\":\"1\"}",
+    "idf.espIdfPathWin": "C:/espressif/esp-idf",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ],
+    "idf.portWin": "COM8",
+    "idf.pythonBinPathWin": "C:/espressif/bin/python_env/idf4.4_py3.8_env/Scripts/python.exe",
+    "idf.toolsPathWin": "C:/espressif/bin"
 }

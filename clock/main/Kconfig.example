@@ -70,16 +70,16 @@ menu "OPNclock"
         help
             WiFi password (WPA or WPA2).
 
-    config OPNPOOL_HARDCODED_MQTT_CREDENTIALS
+    config OPNCLOCK_HARDCODED_MQTT_CREDENTIALS
         bool "Use hardcoded MQTT URL"
         default n
         help
             Use a hardcoded MQTT credentials. Defaults to n for BLE provisioning.
             
-    config OPNPOOL_HARDCODED_MQTT_URL
+    config OPNCLOCK_HARDCODED_MQTT_URL
         string "Hardcoded MQTT broker url endpoint"
         default "mqtt://mqtt:passwd@host.domain:1883"
-        depends on OPNPOOL_HARDCODED_MQTT_CREDENTIALS
+        depends on OPNCLOCK_HARDCODED_MQTT_CREDENTIALS
         help
             Hardcoded MQTT_URL. E.g. mqtt://mqtt:passwd@host.domain:1883.        
         
