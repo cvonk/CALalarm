@@ -189,15 +189,11 @@ where `#` is a the MQTT wildcard character.
 To improve response time we have the option of using the [Push Notifications API](https://developers.google.com/calendar/v3/push):
 > Allows you to improve the response time of your application. It allows you to eliminate the extra network and compute costs involved with polling resources to determine if they have changed. Whenever a watched resource changes, the Google Calendar API notifies your application.
 > To use push notifications, you need to do three things:
-> 1. Register the domain of your receiving URL.
-> 2. Set up your receiving URL, or "Webhook" callback receiver.
-> 3. Set up a notification channel for each resource endpoint you want to watch.
+> 1. Set up your receiving URL, or "Webhook" callback receiver.
+> 2. Set up a notification channel for each resource endpoint you want to watch.
 
-For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy.  Please refer to [Traversing your access router](https://coertvonk.com/sw/embedded/turning-on-the-light-the-hard-way-26806#traverse) for more details.  On the Google Console end, visit APIs and Services > Domain Verification > Add domain.
-
-The second requirement is met by `http_post_server.c`.  Note that the reverse proxy forwards the HTTPS request from Google as HTTP to the device.
-
-The last requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`.
+For the first requirement, the Google push notification need to be able to traverse your access router and reach your ESP32 device.  This requires a SSL certificate and a reverse proxy. This implies you need to configure a reverse proxy (Nginx or Pound) on your router. Setup this reverse proxy so that it forwards HTTPS request from Google as HTTP to the device.  On the device, the module `http_post_server.c` is the endpoint for these push notifications.  
+The second requirement is met by extending the Google Apps Script as shown in `scripts/push-notifications.gs`.
 
 To give the script the necessary permissions, we need to switch it from /default/ GCP (Apps Script–managed Cloud Platform project) to a /standard/ GCP project.  Then give it permissions to the Calendar API and access your domain.
   - in [Google Script](https://script.google.com/) > Resources > Cloud Platform project > associate with (new) Cloud project number
