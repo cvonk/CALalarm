@@ -3,3 +3,4 @@
 factory/sdkconfig
 sdkconfig
 **/Kconfig
+clock/main/Kconfig
