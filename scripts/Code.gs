@@ -4,6 +4,11 @@
 
 var timezone = Session.getScriptTimeZone();
 
+function test() {
+    var e = { 'parameter': { 'devName': 'calclock-2', 'pushId': null } };
+    doGet(e);
+}
+
 function localTime(t) {
     return Utilities.formatDate(t, timezone, 'yyyy-MM-dd HH:mm:ss');
 }
@@ -127,7 +132,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify(json)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function test() {
-    var e = { 'parameter': { 'devName': 'calclock-2', 'pushId': null } };
-    doGet(e);
-}
