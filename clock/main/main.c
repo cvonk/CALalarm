@@ -149,13 +149,13 @@ _connect2wifi_and_start_httpd(ipc_t * const ipc)
     ESP_ERROR_CHECK(wifi_connect_init(&wifi_connect_config));
 
     wifi_config_t * wifi_config_addr = NULL;
-#ifdef CONFIG_OPNCLOCK_HARDCODED_WIFI_CREDENTIALS
-    if (strlen(CONFIG_OPNCLOCK_HARDCODED_WIFI_SSID)) {
+#ifdef CONFIG_CALCLOCK_HARDCODED_WIFI_CREDENTIALS
+    if (strlen(CONFIG_CALCLOCK_HARDCODED_WIFI_SSID)) {
         ESP_LOGW(TAG, "Using SSID from Kconfig");
         wifi_config_t wifi_config = {
             .sta = {
-                .ssid = CONFIG_OPNCLOCK_HARDCODED_WIFI_SSID,
-                .password = CONFIG_OPNCLOCK_HARDCODED_WIFI_PASSWD,
+                .ssid = CONFIG_CALCLOCK_HARDCODED_WIFI_SSID,
+                .password = CONFIG_CALCLOCK_HARDCODED_WIFI_PASSWD,
             }
         };
         wifi_config_addr = &wifi_config;

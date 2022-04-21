@@ -207,7 +207,7 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
 
     if (startsWithin12h && !alreadyFinished) {
 
-        float const pxlsPerHr = CONFIG_OPNCLOCK_WS2812_COUNT / hrsOnClock;
+        float const pxlsPerHr = CONFIG_CALCLOCK_WS2812_COUNT / hrsOnClock;
         float const hrsFromToc = nowTm.tm_hour % hrsOnClock + (float)nowTm.tm_min / 60.0;  // hours from top-of-clock
         uint const nowPxl = round(hrsFromToc * pxlsPerHr);
         uint const startPxl = round((hrsFromToc + MAX(startsInHr, 0)) * pxlsPerHr);
@@ -225,13 +225,13 @@ _addEventToStrip(event_t const * const event, time_t const now, uint * const hue
         for (uint pp = startPxl; pp < endPxl; pp++) {
             uint const minBrightness = 1;
             uint const maxBrightness = flipped ? 50 : 2;
-            uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_OPNCLOCK_WS2812_COUNT;
+            uint const pct = 100 - (pp - nowPxl) * 100 / CONFIG_CALCLOCK_WS2812_COUNT;
             uint const brightness = minBrightness + (maxBrightness - minBrightness) * pct/100;
             uint r, g, b;
             _hsv2rgb(*hue, 100, brightness, &r, &g, &b);
-            uint pxlPos = pp % CONFIG_OPNCLOCK_WS2812_COUNT;
+            uint pxlPos = pp % CONFIG_CALCLOCK_WS2812_COUNT;
             if (flipped) {
-                pxlPos = (CONFIG_OPNCLOCK_WS2812_COUNT - pxlPos) % 60;
+                pxlPos = (CONFIG_CALCLOCK_WS2812_COUNT - pxlPos) % 60;
             }
             ESP_ERROR_CHECK(strip->set_pixel(strip, pxlPos, r, g, b));
         }
@@ -246,11 +246,11 @@ display_task(void * ipc_void)
     _ipc = ipc_void;
 
     // install ws2812 driver
-    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_OPNCLOCK_WS2812_PIN, RMT_CHANNEL_0);
+    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_CALCLOCK_WS2812_PIN, RMT_CHANNEL_0);
     config.clk_div = 2;  // set counter clock to 40MHz
     ESP_ERROR_CHECK(rmt_config(&config));
     ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, 0));
-    led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(CONFIG_OPNCLOCK_WS2812_COUNT, (led_strip_dev_t)config.channel);
+    led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(CONFIG_CALCLOCK_WS2812_COUNT, (led_strip_dev_t)config.channel);
     led_strip_t * const strip = led_strip_new_rmt_ws2812(&strip_config);
     assert(strip);
 

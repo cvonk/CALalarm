@@ -98,7 +98,7 @@ https_client_task(void * ipc_void)
     while (1) {
 
         char * url;
-        assert(asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_OPNCLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) >= 0);
+        assert(asprintf(&url, "%s?devName=%s&pushId=%s", CONFIG_CALCLOCK_GAS_CALENDAR_URL, ipc->dev.name, pushId) >= 0);
         ESP_LOGI(TAG, "url = \"%s\"", url);
 
         esp_http_client_config_t config = {
@@ -125,7 +125,7 @@ https_client_task(void * ipc_void)
 
         bool const pushActive = strlen(pushId);
         uint const pushServiceDuration = 60;  // max push notification service duration is 1 hr
-        int const minPerPxl = 12 * 60 / CONFIG_OPNCLOCK_WS2812_COUNT;
+        int const minPerPxl = 12 * 60 / CONFIG_CALCLOCK_WS2812_COUNT;
 
         uint const waitMinutes = pushActive ? pushServiceDuration : minPerPxl;
         toClientMsg_t msg;
