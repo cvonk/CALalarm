@@ -1,10 +1,10 @@
 # ESP32 Calendar Clock
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/OPNclock)](https://github.com/sandervonk/OPNclock/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/OPNclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub](https://img.shields.io/github/license/sandervonk/OPNclock)
+[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALclock)](https://github.com/sandervonk/CALclock/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/sandervonk/CALclock)
 
-The OPNclock runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
+The CALclock runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
 
 It can be used as anything from a decorative/interactive art piece to a normal clock that can remind you of upcoming appointments in a fun and cleanly designed way.
 
@@ -84,26 +84,26 @@ The script is more involved as needed because also supports *Push Notifications*
 Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository,.
 
 ```bash
-git clone --recursive https://github.com/sandervonk/OPNclock.git
+git clone --recursive https://github.com/sandervonk/CALclock.git
 ```
 
 or using `ssh`
 ```bash
-git clone --recursive git@github.com:sandervonk/OPNclock.git
+git clone --recursive git@github.com:sandervonk/CALclock.git
 ```
 
 From within Microsoft Visual Code (VScode), add the [Microsoft's C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). Then add the [Espressif IDF extension &ge;4.4](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension). ESP-IDF will automatically start its configuration
 
 From VScode:
 
-  * Change to the `OPNclock/clock` folder.
+  * Change to the `CALclock/clock` folder.
   * Connect your ESP32 module, and configure the device and COM port (press the F1-key and select "ESP-IDF: Device configurion")
-  * Edit the configuration (press the F1-key, select "ESP-IDF: SDK configuration editor" and scroll down to OPNclock)
+  * Edit the configuration (press the F1-key, select "ESP-IDF: SDK configuration editor" and scroll down to CALclock)
       * Select "Use hardcoded Wi-Fi credentials" and specify the SSID and password of your Wi-Fi access point.
       * If you have a MQTT broker set up, select "Use hardcoded MQTT URL" and specify the URL in the format `mqtt://username:passwd@host.domain:1883`
   * Start the build-upload-monitor cycle (press the F1-key and select "ESP-IDF: Build, Flash and start a monitor on your device").
 
-The device will appear on your network segment as `opnclock.local`. If MQTT is configured, it will publish MQTT messages.
+The device will appear on your network segment as `calclock.local`. If MQTT is configured, it will publish MQTT messages.
 
 ## ESP32 Design
 
@@ -132,20 +132,20 @@ Control messages are:
 - `mode`, to report the current scan/adv mode and interval
 
 Control messages can be sent:
-- `opnclock/ctrl`, a group topic that all devices listen to, or
-- `opnclock/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
+- `calclock/ctrl`, a group topic that all devices listen to, or
+- `calclock/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
 
 Here `DEVNAME` is either a programmed device name, such as `esp32-1`, or `esp32_XXXX` where the `XXXX` are the last digits of the MAC address. Device names are assigned based on the BLE MAC address in `main/main.c`.
 
 Messages can be sent to a specific device, or the whole group:
 ```
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "opnclock/ctrl/esp32-1" -m "who"
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "opnclock/ctrl" -m "who"
+mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/ctrl/esp32-1" -m "who"
+mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/ctrl" -m "who"
 ```
 
 ### MQTT
 
-Both replies to control messages and unsolicited data such as debug output and coredumps are reported using MQTT topic `opnclock/data/SUBTOPIC/DEVNAME`.
+Both replies to control messages and unsolicited data such as debug output and coredumps are reported using MQTT topic `calclock/data/SUBTOPIC/DEVNAME`.
 
 Subtopics are:
 - `who`, response to `who` control messages,
@@ -155,7 +155,7 @@ Subtopics are:
 
 E.g. to listen to all data, use:
 ```
-mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "opnclock/data/#" -v
+mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/data/#" -v
 ```
 where `#` is a the MQTT wildcard character.
 

@@ -49,8 +49,8 @@ httpd_register_handlers(httpd_handle_t const httpd_handle, esp_ip4_addr_t const 
 	// mDNS
 
 	ESP_ERROR_CHECK(mdns_init());
-    ESP_ERROR_CHECK(mdns_hostname_set("opnclock"));
-    ESP_ERROR_CHECK(mdns_instance_name_set("OPNclock interface"));
+    ESP_ERROR_CHECK(mdns_hostname_set("calclock"));
+    ESP_ERROR_CHECK(mdns_instance_name_set("CALclock interface"));
     ESP_ERROR_CHECK(mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0));
-    ESP_ERROR_CHECK(mdns_service_instance_name_set("_http", "_tcp", "OPNclock"));
+    ESP_ERROR_CHECK(mdns_service_instance_name_set("_http", "_tcp", "CALclock"));
 }
