@@ -1,10 +1,10 @@
-# ESP32 Calendar Clock
+# CALclock full install
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/OPNclock)](https://github.com/sandervonk/OPNclock/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/OPNclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub](https://img.shields.io/github/license/sandervonk/OPNclock)
+[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALclock)](https://github.com/sandervonk/CALclock/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/sandervonk/CALclock)
 
-The OPNclock runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
+Shows Google Calendar events on a LED circle incorporated in a clock faceplate.
 
 It can be used as anything from a decorative/interactive art piece to a normal clock that can remind you of upcoming appointments in a fun and cleanly designed way. I used this to remind me of upcoming appointments once thatschool moved online.
 
@@ -58,12 +58,12 @@ The `DATA-IN` of the LED circle should be driven with TTL signal levels, but we 
 Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.
 
 ```bash
-git clone --recursive https://github.com/sandervonk/OPNclock.git
+git clone --recursive https://github.com/sandervonk/CALclock.git
 ```
 
 or using `ssh`
 ```bash
-git clone --recursive git@github.com:sandervonk/OPNclock.git
+git clone --recursive git@github.com:sandervonk/CALclock.git
 ```
 
 From within Microsoft Visual Code (VScode), add the [Microsoft's C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). Then add the [Espressif IDF extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension) and follow its configuration to install ESP-IDF 4.4.
@@ -74,7 +74,7 @@ The software is a symbiosis between [Google Apps Script](https://developers.goog
 
 To create the Web app:
   - Create a new project on [script.google.com](https://script.google.com);
-  - Rename the project to e.g. `OPNclock-doGet`
+  - Rename the project to e.g. `CALclock-doGet`
   - Copy and paste the code from `script\Code.gs`
   - Add the `Calendar API` service .
   - Select the function `test` and click `Debug`. This will ask for permissions. Don't expect output.
@@ -122,7 +122,7 @@ These different parts communicate using FreeRTOS mailboxes.
 As usual, the `bootloader` image does some minimum initializations. If it finds a valid `ota` image, it passes control over to that image. If not, it starts the `factory` image.
 
   - The `factory` image takes care of provisioning Wi-Fi and MQTT credentials with the help of a phone app. These credentials are stored in the `nvs` partition. It then downloads the `ota` image, and restarts the device.
-  - We refer to the `ota` image as the `clock`, as it provides the core of the functionality of the OPNclock device.
+  - We refer to the `ota` image as the `clock`, as it provides the core of the functionality of the CALclock device.
 
 #### The `clock` image
 
@@ -132,11 +132,11 @@ To host your own `clock` image, you will need to place it on your LAN or on the 
 
 From VScode:
 
-  * Open the `OPNclock/clock` folder (`File > Open`).
+  * Open the `CALclock/clock` folder (`File > Open`).
   * Connect your ESP32 module, and select the serial port using `ctrl-e p`.
-  * Edit the SDK configuration (`ctrl-e g`) and scroll down to OPNclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/to/clock.bin).
+  * Edit the SDK configuration (`ctrl-e g`) and scroll down to CALclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/to/clock.bin).
   * Start the build cycle using `ctrl-e b`.
-  * Upload `OPNclock/clock/build/clock.bin` to your site.
+  * Upload `CALclock/clock/build/clock.bin` to your site.
 
 #### The `factory` image
 
@@ -148,10 +148,10 @@ In the last step of provisioning, this `factory` image will download the `clock`
 
 From VScode:
 
-  * Open the `OPNclock/factory` folder.
+  * Open the `CALclock/factory` folder.
   * Connect your ESP32 module, and select the serial port using `ctrl-e p`.
   * Erase the NVRAM using `ctrl-e r`.
-  * If you built and host your own `clock` image, you need to specify the path by editing the SDK configuration (`ctrl-e g`) and scroll down to OPNclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/clock.bin).
+  * If you built and host your own `clock` image, you need to specify the path by editing the SDK configuration (`ctrl-e g`) and scroll down to CALclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/clock.bin).
   * Start the build-upload-monitor cycle using `ctrl-e d`.
 
 Using an Android phone:
@@ -159,14 +159,14 @@ Using an Android phone:
   * Install and run the OPNpool app from the [Play Store](https://play.google.com/store/apps/details?id=com.coertvonk.opnpool).
   * Using the overflow menu, select "Provision device".
   * Click on the `Provision` button and grant it access [^2].
-  * Click on the name of the OPNclock device once it is detected (`POOL*`).
+  * Click on the name of the CALclock device once it is detected (`POOL*`).
   * Select the Wi-Fi SSID to connect to and give it the password.
   * If you don't have a MQTT broker press `Skip`.  Otherwise, specify the broker URL in the format `mqtt://username:passwd@host.domain:1883`.
   * Wait a few minutes for the provisioning to complete.
 
-[^2]: Precise location permission is needed to find and connect to the OPNclock device using Bluetooth LE.
+[^2]: Precise location permission is needed to find and connect to the CALclock device using Bluetooth LE.
 
-The device will appear on your network segment as `opnclock.local`. If MQTT is configured, it will publish MQTT messages.
+The device will appear on your network segment as `calclock.local`. If MQTT is configured, it will publish MQTT messages.
 
 *Your clock is now functional!*
 
@@ -187,7 +187,7 @@ The second requirement is already met by the Google apps script that we installe
 
 ## Behind the scenes
 
-To easily see what version of the software is running on the OPNclock device, or what Wi-Fi network it is connected to, the firmware contains a MQTT client.
+To easily see what version of the software is running on the CALclock device, or what Wi-Fi network it is connected to, the firmware contains a MQTT client.
 > MQTT stands for MQ Telemetry Transport. It is a publish/subscribe, extremely simple and lightweight messaging protocol, designed for constrained devices and low-bandwidth, high-latency or unreliable networks.
 
 It supports the following control messages:
@@ -197,18 +197,18 @@ It supports the following control messages:
 - `mode`, to report the current scan/adv mode and interval
 
 Control messages can be sent to:
-- `opnclock/ctrl`, a group topic that all devices listen to, or
-- `opnclock/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
+- `calclock/ctrl`, a group topic that all devices listen to, or
+- `calclock/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
 
 Here `DEVNAME` is either a programmed device name, such as `esp32-1`, or `esp32_XXXX` where the `XXXX` are the last digits of the MAC address. Device names are assigned based on the BLE MAC address in `main/main.c`.
 
 Messages can be sent to a specific device, or the whole group:
 ```
-mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "opnclock/ctrl/esp32-1" -m "who"
-mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "opnclock/ctrl" -m "who"
+mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calclock/ctrl/esp32-1" -m "who"
+mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calclock/ctrl" -m "who"
 ```
 
-Both replies to such control messages and debug output (and coredumps) are reported using MQTT topic `opnclock/data/SUBTOPIC/DEVNAME`.
+Both replies to such control messages and debug output (and coredumps) are reported using MQTT topic `calclock/data/SUBTOPIC/DEVNAME`.
 
 Subtopics are:
 - `who`, response to `who` control messages,
@@ -218,7 +218,7 @@ Subtopics are:
 
 E.g. to listen to all data, use:
 ```
-mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "opnclock/data/#" -v
+mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/data/#" -v
 ```
 where `#` is a the MQTT wildcard character.
 

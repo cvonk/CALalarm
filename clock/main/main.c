@@ -58,8 +58,8 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 		char const * const name;
 	} knownBrd_t;
 	static knownBrd_t knownBrds[] = {
-        { {0x30, 0xAE, 0xA4, 0x1A, 0x20, 0xF0}, "opnclock-1" },
-        { {0x30, 0xAE, 0xA4, 0x24, 0x2C, 0x98}, "opnclock-2" },
+        { {0x30, 0xAE, 0xA4, 0x1A, 0x20, 0xF0}, "calclock-1" },
+        { {0x30, 0xAE, 0xA4, 0x24, 0x2C, 0x98}, "calclock-2" },
         { {0x30, 0xae, 0xa4, 0xcc, 0x45, 0x04}, "esp32-wrover-1" },
         { {0x30, 0xAE, 0xA4, 0xCC, 0x42, 0x78}, "esp32-wrover-2" },
 	};
@@ -149,13 +149,13 @@ _connect2wifi_and_start_httpd(ipc_t * const ipc)
     ESP_ERROR_CHECK(wifi_connect_init(&wifi_connect_config));
 
     wifi_config_t * wifi_config_addr = NULL;
-#ifdef CONFIG_OPNCLOCK_HARDCODED_WIFI_CREDENTIALS
-    if (strlen(CONFIG_OPNCLOCK_HARDCODED_WIFI_SSID)) {
+#ifdef CONFIG_CALCLOCK_HARDCODED_WIFI_CREDENTIALS
+    if (strlen(CONFIG_CALCLOCK_HARDCODED_WIFI_SSID)) {
         ESP_LOGW(TAG, "Using SSID from Kconfig");
         wifi_config_t wifi_config = {
             .sta = {
-                .ssid = CONFIG_OPNCLOCK_HARDCODED_WIFI_SSID,
-                .password = CONFIG_OPNCLOCK_HARDCODED_WIFI_PASSWD,
+                .ssid = CONFIG_CALCLOCK_HARDCODED_WIFI_SSID,
+                .password = CONFIG_CALCLOCK_HARDCODED_WIFI_PASSWD,
             }
         };
         wifi_config_addr = &wifi_config;

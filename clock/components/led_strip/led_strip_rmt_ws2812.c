@@ -183,7 +183,9 @@ led_strip_t * led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num)
     config.clk_div = 2;
 
     ESP_ERROR_CHECK(rmt_config(&config));
-    ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, 0));
+    // random colors in abt 1% of the writes to the LED strip, specify ESP_INTR_FLAG_IRAM
+    // see: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/spi_flash_concurrency.html#iram-safe-interrupt-handlers
+    ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, ESP_INTR_FLAG_IRAM));
 
     // install ws2812 driver
     led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(led_num, (led_strip_dev_t)config.channel);

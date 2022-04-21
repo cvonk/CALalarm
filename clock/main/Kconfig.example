@@ -1,4 +1,4 @@
-menu "OPNclock"
+menu "CALclock"
 
     config OTA_UPDATE_FIRMWARE_URL
         string "Firmware upgrade url endpoint"
@@ -12,74 +12,74 @@ menu "OPNclock"
         help
             Maximum time for reception [sec]
 
-    config OPNCLOCK_WS2812_PIN
+    config CALCLOCK_WS2812_PIN
         int "GPIO# to WS2812 DATA"
         default 18
         help
             Transmit GPIO pin on ESP32 that connects to DATA on the LED circle
 
-    config OPNCLOCK_WS2812_COUNT
+    config CALCLOCK_WS2812_COUNT
         int "Number of LEDs"
         default 60
         help
             Number of WS2812 pixels on LED circle
 
-    config OPNCLOCK_GAS_CALENDAR_URL
+    config CALCLOCK_GAS_CALENDAR_URL
         string "Google script uri"
         default "https://script.google.com/macros/s/YOUR_UNIQ_KEY/exec"
         help
             Public URL of the Google Apps script that supplies JSON of the
             calendar events.
 
-    config OPNCLOCK_GAS_INTERVAL
+    config CALCLOCK_GAS_INTERVAL
         int "Polling interval for Google Apps Script"
         default 2
         help
             Number of minutes between polling the calendar events using Google Apps Script.
             When using push notifications this can be as high as e.g. 60 minutes.
 
-    config OPNCLOCK_MQTT_DATA_TOPIC
+    config CALCLOCK_MQTT_DATA_TOPIC
         string "MQTT data topic"
         default "calclock/data"
         help
             MQTT topic for data messages from the ESP32
 
-    config OPNCLOCK_MQTT_CTRL_TOPIC
+    config CALCLOCK_MQTT_CTRL_TOPIC
         string "MQTT control topic"
         default "calclock/ctrl"
         help
             MQTT topic for ctrl messages to the ESP32
 
-    config OPNCLOCK_HARDCODED_WIFI_CREDENTIALS
+    config CALCLOCK_HARDCODED_WIFI_CREDENTIALS
         bool "Use hardcoded Wi-Fi credentials"
         default n
         help
             Use a hardcoded Wi-Fi credentials. Defaults to n for BLE provisioning.
             
-    config OPNCLOCK_HARDCODED_WIFI_SSID
+    config CALCLOCK_HARDCODED_WIFI_SSID
         string "WiFi SSID"
         default ""
-        depends on OPNCLOCK_HARDCODED_WIFI_CREDENTIALS
+        depends on CALCLOCK_HARDCODED_WIFI_CREDENTIALS
         help
             SSID (network name).
 
-    config OPNCLOCK_HARDCODED_WIFI_PASSWD
+    config CALCLOCK_HARDCODED_WIFI_PASSWD
         string "WiFi Password"
         default ""
-        depends on OPNCLOCK_HARDCODED_WIFI_CREDENTIALS
+        depends on CALCLOCK_HARDCODED_WIFI_CREDENTIALS
         help
             WiFi password (WPA or WPA2).
 
-    config OPNCLOCK_HARDCODED_MQTT_CREDENTIALS
+    config CALCLOCK_HARDCODED_MQTT_CREDENTIALS
         bool "Use hardcoded MQTT URL"
         default n
         help
             Use a hardcoded MQTT credentials. Defaults to n for BLE provisioning.
             
-    config OPNCLOCK_HARDCODED_MQTT_URL
+    config CALCLOCK_HARDCODED_MQTT_URL
         string "Hardcoded MQTT broker url endpoint"
         default "mqtt://mqtt:passwd@host.domain:1883"
-        depends on OPNCLOCK_HARDCODED_MQTT_CREDENTIALS
+        depends on CALCLOCK_HARDCODED_MQTT_CREDENTIALS
         help
             Hardcoded MQTT_URL. E.g. mqtt://mqtt:passwd@host.domain:1883.        
         
