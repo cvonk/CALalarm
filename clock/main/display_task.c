@@ -18,7 +18,8 @@
 #include <driver/rmt.h>
 #include <cJSON.h>
 
-#include "led_strip.h"
+#include <led_strip.h>
+
 #include "display_task.h"
 #include "ipc/ipc.h"
 
@@ -280,8 +281,10 @@ display_task(void * ipc_void)
         event_t const * event = events;
         ESP_ERROR_CHECK(strip->clear(strip, 100));  // turn off all LEDs
         for (uint ee = 0; ee < len; ee++, event++) {
+            // build RGB values
             _addEventToStrip(event, now, &hue, strip, flipped);
         }
+        // write RGB values to strip driver
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
         // 2BD: maybe retry if TIMEOUT ??
     }

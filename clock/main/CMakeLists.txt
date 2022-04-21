@@ -12,7 +12,7 @@ idf_component_register( SRCS
                             ../../components/factory_reset_task/include
                             ../../components/ota_update_task/include
                             ../../components/wifi_connect/include
-                            ../../components/led_strip/include
+                            $ENV{IDF_PATH}/examples/common_components/led_strip/include
                         PRIV_REQUIRES
                             esp_http_server 
                             esp_http_client
