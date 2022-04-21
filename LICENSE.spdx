@@ -1,0 +1,7 @@
+SPDXVersion: SPDX-2.1
+DataLicense: GPL-3.0-or-later
+Creator: Sander Vonk
+PackageName: CALclock
+PackageOriginator: Sander Vonk
+PackageHomePage: https://github.com/sandervonk/CALclock/
+PackageLicenseDeclared: LICENSE
