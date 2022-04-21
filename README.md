@@ -1,4 +1,4 @@
-# ESP32 Calendar Clock
+# CALclock
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALclock)](https://github.com/sandervonk/CALclock/discussions)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
