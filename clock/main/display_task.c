@@ -285,7 +285,11 @@ display_task(void * ipc_void)
             _addEventToStrip(event, now, &hue, strip, flipped);
         }
         // write RGB values to strip driver
+
+        //vTaskSuspend(ipc1Handle);
         ESP_ERROR_CHECK(strip->refresh(strip, 100));
-        // 2BD: maybe retry if TIMEOUT ??
+        //vTaskResume(ipc1Handle);
+
+        // 2BD: maybe retry if TIMEOUT ?? instead of restarting ..
     }
 }
