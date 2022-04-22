@@ -1,7 +1,7 @@
 SPDXVersion: SPDX-2.1
 DataLicense: GPL-3.0-or-later
 Creator: Sander Vonk
-PackageName: CALclock
+PackageName: CALalarm
 PackageOriginator: Sander Vonk
-PackageHomePage: https://github.com/sandervonk/CALclock/
+PackageHomePage: https://github.com/sandervonk/CALalarm/
 PackageLicenseDeclared: LICENSE

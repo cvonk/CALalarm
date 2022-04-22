@@ -23,13 +23,6 @@
 #include "mqtt_task.h"
 #include "coredump_to_server.h"
 
-#define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-
 static char const * const TAG = "mqtt_task";
 
 static EventGroupHandle_t _mqttEventGrp = NULL;
@@ -78,7 +71,7 @@ _forwardCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
     coredump_priv_t priv = {
         .client = client,
     };
-    asprintf(&priv.topic, "%s/coredump/%s", CONFIG_CALCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+    asprintf(&priv.topic, "%s/coredump/%s", CONFIG_CALALARM_MQTT_DATA_TOPIC, ipc->dev.name);
     coredump_to_server_config_t coredump_cfg = {
         .start = NULL,
         .end = NULL,
@@ -157,9 +150,9 @@ _connect2broker(ipc_t const * const ipc) {
 
     char * mqtt_url = NULL;
 
-#ifdef CONFIG_CALCLOCK_HARDCODED_MQTT_CREDENTIALS
+#ifdef CONFIG_CALALARM_HARDCODED_MQTT_CREDENTIALS
     ESP_LOGW(TAG, "Using mqtt_url from Kconfig");
-    mqtt_url = strdup(CONFIG_CALCLOCK_HARDCODED_MQTT_URL);
+    mqtt_url = strdup(CONFIG_CALALARM_HARDCODED_MQTT_URL);
 #else
     ESP_LOGW(TAG, "Using mqtt_url from nvram");
     nvs_handle_t nvs_handle;
@@ -206,7 +199,7 @@ _type2subtopic(toMqttMsgType_t const type)
         { TO_MQTT_MSGTYPE_WHO, "who" },
         { TO_MQTT_MSGTYPE_DBG, "dbg" },
     };
-    for (uint ii = 0; ii < ARRAYSIZE(mapping); ii++) {
+    for (uint ii = 0; ii < ARRAY_SIZE(mapping); ii++) {
         if (type == mapping[ii].type) {
             return mapping[ii].subtopic;
         }
@@ -238,7 +231,7 @@ _getCoredump(ipc_t * ipc, esp_mqtt_client_handle_t const client)
     ESP_LOGI(TAG, "Coredump is %u bytes", coredump_size);
 
     char * topic;
-    asprintf(&topic, "%s/coredump/%s", CONFIG_CALCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+    asprintf(&topic, "%s/coredump/%s", CONFIG_CALALARM_MQTT_DATA_TOPIC, ipc->dev.name);
 
     for (size_t offset = 0; offset < coredump_size; offset += chunk_len) {
 
@@ -293,11 +286,11 @@ mqtt_task(void * ipc_void) {
     ESP_LOGI(TAG, "starting ..");
 	ipc_t * ipc = ipc_void;
 
-    _topic.ctrl      = malloc(strlen(CONFIG_CALCLOCK_MQTT_CTRL_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
-    _topic.ctrlGroup = malloc(strlen(CONFIG_CALCLOCK_MQTT_CTRL_TOPIC) + 1);
+    _topic.ctrl      = malloc(strlen(CONFIG_CALALARM_MQTT_CTRL_TOPIC) + 1 + strlen(ipc->dev.name) + 1);
+    _topic.ctrlGroup = malloc(strlen(CONFIG_CALALARM_MQTT_CTRL_TOPIC) + 1);
     assert(_topic.ctrl && _topic.ctrlGroup);
-    sprintf(_topic.ctrl, "%s/%s", CONFIG_CALCLOCK_MQTT_CTRL_TOPIC, ipc->dev.name);
-    sprintf(_topic.ctrlGroup, "%s", CONFIG_CALCLOCK_MQTT_CTRL_TOPIC);
+    sprintf(_topic.ctrl, "%s/%s", CONFIG_CALALARM_MQTT_CTRL_TOPIC, ipc->dev.name);
+    sprintf(_topic.ctrlGroup, "%s", CONFIG_CALALARM_MQTT_CTRL_TOPIC);
 
 	_mqttEventGrp = xEventGroupCreate();
     esp_mqtt_client_handle_t const client = _connect2broker(ipc);
@@ -311,9 +304,9 @@ mqtt_task(void * ipc_void) {
             char * topic;
             char const * const subtopic = _type2subtopic(msg.dataType);
             if (subtopic) {
-                asprintf(&topic, "%s/%s/%s", CONFIG_CALCLOCK_MQTT_DATA_TOPIC, subtopic, ipc->dev.name);
+                asprintf(&topic, "%s/%s/%s", CONFIG_CALALARM_MQTT_DATA_TOPIC, subtopic, ipc->dev.name);
             } else {
-                asprintf(&topic, "%s/%s", CONFIG_CALCLOCK_MQTT_DATA_TOPIC, ipc->dev.name);
+                asprintf(&topic, "%s/%s", CONFIG_CALALARM_MQTT_DATA_TOPIC, ipc->dev.name);
             }
             esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
             free(topic);

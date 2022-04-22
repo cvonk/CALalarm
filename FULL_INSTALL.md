@@ -1,8 +1,8 @@
-# CALclock full install
+# CALalarm full install
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALclock)](https://github.com/sandervonk/CALclock/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALclock?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub](https://img.shields.io/github/license/sandervonk/CALclock)
+[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALalarm)](https://github.com/sandervonk/CALalarm/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALalarm?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub](https://img.shields.io/github/license/sandervonk/CALalarm)
 
 Shows Google Calendar events on a LED circle incorporated in a clock faceplate.
 
@@ -13,7 +13,7 @@ It can be used as anything from a decorative/interactive art piece to a normal c
 ## Features:
 
   - [x] Synchronizes with Google Calendar
-  - [x] Shows calendar events in different colors using an LED circle on a clock.
+  - [x] Shows calendar events on OLED screen
   - [x] Push notifications for timely updates to calendar changes.
   - [x] Over-the-air (OTA) updates
   - [x] WiFi provisioning using phone app
@@ -47,9 +47,9 @@ Connect the 5 Volt adapter to the ESP32 and LED strip.
 
 Connect the data from the ESP32 module to the LED circle as shown below. 
 
-| ESP32 module | LED circle     |
+| ESP32 module | xxxx           |
 |:-------------|:---------------|
-| `GPIO#18`    | WS2812 DATA-IN |
+| `GPIO#18`    | xx             |
 
 The `DATA-IN` of the LED circle should be driven with TTL signal levels, but we seem to get away with using the 3.3 Volt output from ESP32 in series with a 470 Ohms resistor. We didn't notice a diffeence when using a level shifter.
 
@@ -58,12 +58,12 @@ The `DATA-IN` of the LED circle should be driven with TTL signal levels, but we 
 Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.
 
 ```bash
-git clone --recursive https://github.com/sandervonk/CALclock.git
+git clone --recursive https://github.com/sandervonk/CALalarm.git
 ```
 
 or using `ssh`
 ```bash
-git clone --recursive git@github.com:sandervonk/CALclock.git
+git clone --recursive git@github.com:sandervonk/CALalarm.git
 ```
 
 From within Microsoft Visual Code (VScode), add the [Microsoft's C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). Then add the [Espressif IDF extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension) and follow its configuration to install ESP-IDF 4.4.
@@ -74,11 +74,11 @@ The software is a symbiosis between [Google Apps Script](https://developers.goog
 
 To create the Web app:
   - Create a new project on [script.google.com](https://script.google.com);
-  - Rename the project to e.g. `CALclock-doGet`
+  - Rename the project to e.g. `CALalarm-doGet`
   - Copy and paste the code from `script\Code.gs`
-  - Add the `Calendar API` service .
+  - Add the `Google Calendar API` service .
   - Select the function `test` and click `Debug`. This will ask for permissions. Don't expect output.
-  - Click `Deploy` and chose `New deployment`, chose
+  - Click `Deploy` and chose `New deployment`, choose
     - Service tye = `Web app`
     - Execute as = `Me`
     - Who has access = `Anyone`, make sure you understand what the script does!
@@ -92,11 +92,8 @@ Open the URL in a web browser. You should get a reply like
     "events": [
         { 
             "start": "2022-04-20 10:55:00",
-            "end": "2022-04-20 15::45:00"
-        },
-        { 
-            "start": "2022-04-20 15:55:00",
-            "end": "2022-04-20 17::15:00"
+            "end": "2022-04-20 15:45:00",
+            "title: "school"
         }
     ]
 }
@@ -122,7 +119,7 @@ These different parts communicate using FreeRTOS mailboxes.
 As usual, the `bootloader` image does some minimum initializations. If it finds a valid `ota` image, it passes control over to that image. If not, it starts the `factory` image.
 
   - The `factory` image takes care of provisioning Wi-Fi and MQTT credentials with the help of a phone app. These credentials are stored in the `nvs` partition. It then downloads the `ota` image, and restarts the device.
-  - We refer to the `ota` image as the `clock`, as it provides the core of the functionality of the CALclock device.
+  - We refer to the `ota` image as the `clock`, as it provides the core of the functionality of the CALalarm device.
 
 #### The `clock` image
 
@@ -132,11 +129,11 @@ To host your own `clock` image, you will need to place it on your LAN or on the 
 
 From VScode:
 
-  * Open the `CALclock/clock` folder (`File > Open`).
+  * Open the `CALalarm/clock` folder (`File > Open`).
   * Connect your ESP32 module, and select the serial port using `ctrl-e p`.
-  * Edit the SDK configuration (`ctrl-e g`) and scroll down to CALclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/to/clock.bin).
+  * Edit the SDK configuration (`ctrl-e g`) and scroll down to CALalarm and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/to/clock.bin).
   * Start the build cycle using `ctrl-e b`.
-  * Upload `CALclock/clock/build/clock.bin` to your site.
+  * Upload `CALalarm/clock/build/clock.bin` to your site.
 
 #### The `factory` image
 
@@ -148,10 +145,10 @@ In the last step of provisioning, this `factory` image will download the `clock`
 
 From VScode:
 
-  * Open the `CALclock/factory` folder.
+  * Open the `CALalarm/factory` folder.
   * Connect your ESP32 module, and select the serial port using `ctrl-e p`.
   * Erase the NVRAM using `ctrl-e r`.
-  * If you built and host your own `clock` image, you need to specify the path by editing the SDK configuration (`ctrl-e g`) and scroll down to CALclock and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/clock.bin).
+  * If you built and host your own `clock` image, you need to specify the path by editing the SDK configuration (`ctrl-e g`) and scroll down to CALalarm and specify your "Firmware upgrade url endpoint" (e.g. http://host.domain/path/clock.bin).
   * Start the build-upload-monitor cycle using `ctrl-e d`.
 
 Using an Android phone:
@@ -159,14 +156,14 @@ Using an Android phone:
   * Install and run the OPNpool app from the [Play Store](https://play.google.com/store/apps/details?id=com.coertvonk.opnpool).
   * Using the overflow menu, select "Provision device".
   * Click on the `Provision` button and grant it access [^2].
-  * Click on the name of the CALclock device once it is detected (`POOL*`).
+  * Click on the name of the CALalarm device once it is detected (`POOL*`).
   * Select the Wi-Fi SSID to connect to and give it the password.
   * If you don't have a MQTT broker press `Skip`.  Otherwise, specify the broker URL in the format `mqtt://username:passwd@host.domain:1883`.
   * Wait a few minutes for the provisioning to complete.
 
-[^2]: Precise location permission is needed to find and connect to the CALclock device using Bluetooth LE.
+[^2]: Precise location permission is needed to find and connect to the CALalarm device using Bluetooth LE.
 
-The device will appear on your network segment as `calclock.local`. If MQTT is configured, it will publish MQTT messages.
+The device will appear on your network segment as `calalarm.local`. If MQTT is configured, it will publish MQTT messages.
 
 *Your clock is now functional!*
 
@@ -187,7 +184,7 @@ The second requirement is already met by the Google apps script that we installe
 
 ## Behind the scenes
 
-To easily see what version of the software is running on the CALclock device, or what Wi-Fi network it is connected to, the firmware contains a MQTT client.
+To easily see what version of the software is running on the CALalarm device, or what Wi-Fi network it is connected to, the firmware contains a MQTT client.
 > MQTT stands for MQ Telemetry Transport. It is a publish/subscribe, extremely simple and lightweight messaging protocol, designed for constrained devices and low-bandwidth, high-latency or unreliable networks.
 
 It supports the following control messages:
@@ -197,18 +194,18 @@ It supports the following control messages:
 - `mode`, to report the current scan/adv mode and interval
 
 Control messages can be sent to:
-- `calclock/ctrl`, a group topic that all devices listen to, or
-- `calclock/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
+- `calalarm/ctrl`, a group topic that all devices listen to, or
+- `calalarm/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
 
 Here `DEVNAME` is either a programmed device name, such as `esp32-1`, or `esp32_XXXX` where the `XXXX` are the last digits of the MAC address. Device names are assigned based on the BLE MAC address in `main/main.c`.
 
 Messages can be sent to a specific device, or the whole group:
 ```
-mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calclock/ctrl/esp32-1" -m "who"
-mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calclock/ctrl" -m "who"
+mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calalarm/ctrl/esp32-1" -m "who"
+mosquitto_pub -h BROKER -u USERNAME -P PASSWORD -t "calalarm/ctrl" -m "who"
 ```
 
-Both replies to such control messages and debug output (and coredumps) are reported using MQTT topic `calclock/data/SUBTOPIC/DEVNAME`.
+Both replies to such control messages and debug output (and coredumps) are reported using MQTT topic `calalarm/data/SUBTOPIC/DEVNAME`.
 
 Subtopics are:
 - `who`, response to `who` control messages,
@@ -218,7 +215,7 @@ Subtopics are:
 
 E.g. to listen to all data, use:
 ```
-mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calclock/data/#" -v
+mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calalarm/data/#" -v
 ```
 where `#` is a the MQTT wildcard character.
 

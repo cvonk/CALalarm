@@ -1,10 +1,10 @@
-menu "CALclock"
+menu "CALalarm"
 
     config OTA_UPDATE_FIRMWARE_URL
         string "Firmware upgrade url endpoint"
-        default "http://coertvonk.com/svonk/calclock/clock.bin"
+        default "http://coertvonk.com/cvonk/calalarm/alarm.bin"
         help
-            URL of server which hosts the firmware image. (make sure it matches Kconfig in clock dir)
+            URL of server which hosts the firmware image. (make sure it matches Kconfig in alarm dir)
 
     config OTA_UPDATE_RECV_TIMEOUT
         int "OTA Update receive Timeout"

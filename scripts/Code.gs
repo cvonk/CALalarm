@@ -5,7 +5,7 @@
 var timezone = Session.getScriptTimeZone();
 
 function test() {
-    var e = { 'parameter': { 'devName': 'calclock-2', 'pushId': null } };
+    var e = { 'parameter': { 'devName': 'calalarm-2', 'pushId': null } };
     doGet(e);
 }
 

@@ -11,5 +11,5 @@ idf_component_register( SRCS
                             "../components/factory_reset_task/include"
                             "../components/ota_update_task/include"
                             "../components/wifi_connect/include"
-                            "../components/led_strip/include"
+                            "../components/ssd1306/main"
 )

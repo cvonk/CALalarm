@@ -1,4 +1,4 @@
-menu "CALclock"
+menu "CALalarm"
 
     config OTA_UPDATE_FIRMWARE_URL
         string "Firmware upgrade url endpoint"

@@ -28,11 +28,6 @@
 #include "display_task.h"
 #include "mqtt_task.h"
 
-#define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-
 static char const * const TAG = "main_app";
 
 typedef struct wifi_connect_priv_t {
@@ -58,12 +53,11 @@ _mac2devname(uint8_t const * const mac, char * const name, size_t name_len) {
 		char const * const name;
 	} knownBrd_t;
 	static knownBrd_t knownBrds[] = {
-        { {0x30, 0xAE, 0xA4, 0x1A, 0x20, 0xF0}, "calclock-1" },
-        { {0x30, 0xAE, 0xA4, 0x24, 0x2C, 0x98}, "calclock-2" },
+        { {0x30, 0xAE, 0xA4, 0x24, 0x2C, 0x98}, "calalarm" },
         { {0x30, 0xae, 0xa4, 0xcc, 0x45, 0x04}, "esp32-wrover-1" },
         { {0x30, 0xAE, 0xA4, 0xCC, 0x42, 0x78}, "esp32-wrover-2" },
 	};
-	for (uint ii=0; ii < ARRAYSIZE(knownBrds); ii++) {
+	for (uint ii=0; ii < ARRAY_SIZE(knownBrds); ii++) {
 		if (memcmp(mac, knownBrds[ii].mac, WIFI_DEVMAC_LEN) == 0) {
 			strncpy(name, knownBrds[ii].name, name_len);
 			return;
@@ -149,13 +143,13 @@ _connect2wifi_and_start_httpd(ipc_t * const ipc)
     ESP_ERROR_CHECK(wifi_connect_init(&wifi_connect_config));
 
     wifi_config_t * wifi_config_addr = NULL;
-#ifdef CONFIG_CALCLOCK_HARDCODED_WIFI_CREDENTIALS
-    if (strlen(CONFIG_CALCLOCK_HARDCODED_WIFI_SSID)) {
+#ifdef CONFIG_CALALARM_HARDCODED_WIFI_CREDENTIALS
+    if (strlen(CONFIG_CALALARM_HARDCODED_WIFI_SSID)) {
         ESP_LOGW(TAG, "Using SSID from Kconfig");
         wifi_config_t wifi_config = {
             .sta = {
-                .ssid = CONFIG_CALCLOCK_HARDCODED_WIFI_SSID,
-                .password = CONFIG_CALCLOCK_HARDCODED_WIFI_PASSWD,
+                .ssid = CONFIG_CALALARM_HARDCODED_WIFI_SSID,
+                .password = CONFIG_CALALARM_HARDCODED_WIFI_PASSWD,
             }
         };
         wifi_config_addr = &wifi_config;
