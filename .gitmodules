@@ -1,19 +1,15 @@
-[submodule "components/coredump_to_server"]
-	path = clock/components/coredump_to_server
-	url = https://github.com/cvonk/ESP32_coredump-to-server
-	branch = master
-[submodule "components/ota_update_task"]
-	path = clock/components/ota_update_task
+[submodule "alarm/components/ota_update_task"]
+	path = alarm/components/ota_update_task
 	url = https://github.com/cvonk/ESP32_ota-update-task.git
-	branch = master
-[submodule "components/factory_reset_task"]
-	path = clock/components/factory_reset_task
+[submodule "alarm/components/factory_reset_task"]
+	path = alarm/components/factory_reset_task
 	url = https://github.com/cvonk/ESP32_factory-reset-task.git
-	branch = master
-[submodule "components/wifi_connect"]
-	path = clock/components/wifi_connect
+[submodule "alarm/components/wifi_connect"]
+	path = alarm/components/wifi_connect
 	url = https://github.com/cvonk/ESP32_wifi-connect.git
-	branch = master
 [submodule "factory/components/factory_ble_prov"]
 	path = factory/components/factory_ble_prov
 	url = git@github.com:cvonk/ESP32_factory-ble-prov.git
+[submodule "alarm/components/coredump_to_server"]
+	path = alarm/components/coredump_to_server
+	url = git@github.com:cvonk/ESP32_coredump-to-server.git
