@@ -42,6 +42,84 @@ ssd1306_display_text(SSD1306_t * const dev, int const page, char const * const t
 	}
 }
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
+#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
+#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
+#ifndef MIN
+#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#endif
+#ifndef MIN
+#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+#endif
+
+typedef union out_column_t {
+	uint32_t u32;
+	uint8_t u8[4];
+} PACK8 out_column_t;
+
+
+//static char const * const TAG = "ssd1306";
+
+void 
+ssd1306_display_text_x3(SSD1306_t * const dev, int const page, char const * const text, int const text_len, bool const invert)
+{
+	if (page >= dev->_pages) return;
+	int _text_len = text_len;
+	if (_text_len > 5) _text_len = 5;
+
+	uint8_t seg = 0;
+
+	// for each characters on the line
+
+	for (uint8_t nn = 0; nn < _text_len; nn++) {
+
+		uint8_t const * const in_columns = font8x8_basic_tr[(uint8_t)text[nn]];
+
+		// make the character 3x as high
+
+		out_column_t out_columns[8];
+		memset(out_columns, 0, sizeof(out_columns));
+
+		for (uint8_t xx = 0; xx < 8; xx++) {  // for each column (x-direction)
+
+			uint32_t in_bitmask = 0b1;
+			uint32_t out_bitmask = 0b111;
+
+			for (uint8_t yy = 0; yy < 8; yy++) {  // for pixel (y-direction)
+				if (in_columns[xx] & in_bitmask) {
+					out_columns[xx].u32 |= out_bitmask;
+				}
+				in_bitmask <<= 1;
+				out_bitmask <<= 3;
+			}
+		}
+
+		// render character in 8 column high pieces, making them 3x as wide
+
+		for (uint8_t yy = 0; yy < 3; yy++)  {  // for each group of 8 pixels high (y-direction)
+
+			uint8_t image[24];
+			for (uint8_t xx = 0; xx < 8; xx++) {  // for each column (x-direction)
+				image[xx*3+0] = 
+				image[xx*3+1] = 
+				image[xx*3+2] = out_columns[xx].u8[yy];
+				//ESP_LOGW(TAG, "%1d,%1d = %02X", yy, xx, image[xx]);
+			}
+			if (invert) ssd1306_invert(image, 24);
+			if (dev->_flip) ssd1306_flip(image, 24);
+			if (dev->_address == SPIAddress) {
+				spi_display_image(dev, page+yy, seg, image, 24);
+			} else {
+				i2c_display_image(dev, page+yy, seg, image, 24);
+			}
+		}
+		seg = seg + 24;
+	}
+}
+
 void 
 ssd1306_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width)
 {

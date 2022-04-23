@@ -164,9 +164,11 @@ _update_oled(SSD1306_t * const dev, time_t const now, event_t const * const even
     char str[15];
     snprintf(str, sizeof(str), "%02d:%02d", nowTm.tm_hour, nowTm.tm_min);
     ssd1306_clear_line(dev, 0, false);
-	ssd1306_display_text(dev, 0, str, strlen(str), false);
-
     ssd1306_clear_line(dev, 1, false);
+    ssd1306_clear_line(dev, 2, false);
+	ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
+
+    ssd1306_clear_line(dev, 3, false);
     if (event->valid) {
         struct tm startTm;
         localtime_r(&event->start, &startTm);
@@ -198,10 +200,15 @@ display_task(void * ipc_void)
     SSD1306_t dev;
     _init_oled(&dev);
 
+    ssd1306_clear_line(&dev, 0, false);
+    ssd1306_clear_line(&dev, 1, false);
+    ssd1306_clear_line(&dev, 2, false);
+    ssd1306_display_text_x3(&dev, 0, "2", 1, false);
+
     event_t event = {};
     time_t now;
 //    time_t const loopInSec = 60;  // how often the while-loop runs [sec]
-    time_t const loopInSec = 1;  // how often the while-loop runs [sec]
+    time_t const loopInSec = 10;  // how often the while-loop runs [sec]
 
     // init A/D converter
     ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL, ADC_ATTEN_DB_0));  // measures 0.10 to 0.95 Volts
