@@ -10,7 +10,8 @@
 
 #define tag "SSD1306"
 
-void ssd1306_init(SSD1306_t * dev, int width, int height)
+void 
+ssd1306_init(SSD1306_t * dev, int width, int height)
 {
 	if (dev->_address == SPIAddress) {
 		spi_init(dev, width, height);
@@ -19,7 +20,8 @@ void ssd1306_init(SSD1306_t * dev, int width, int height)
 	}
 }
 
-void ssd1306_display_text(SSD1306_t * dev, int page, char * text, int text_len, bool invert)
+void 
+ssd1306_display_text(SSD1306_t * const dev, int const page, char const * const text, int const text_len, bool const invert)
 {
 	if (page >= dev->_pages) return;
 	int _text_len = text_len;
@@ -40,7 +42,8 @@ void ssd1306_display_text(SSD1306_t * dev, int page, char * text, int text_len, 
 	}
 }
 
-void ssd1306_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width)
+void 
+ssd1306_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width)
 {
 	if (dev->_address == SPIAddress) {
 		spi_display_image(dev, page, seg, images, width);

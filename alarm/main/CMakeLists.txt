@@ -2,6 +2,7 @@ idf_component_register( SRCS
                             "main.c"
                             "mqtt_task.c"
                             "display_task.c"
+                            "buzzer_task.c"
                             "httpd/httpd.c"
                             "httpd/httpd_google_push.c"
                             "http/https_client_task.c"

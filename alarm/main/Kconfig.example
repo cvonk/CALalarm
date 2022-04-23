@@ -2,7 +2,7 @@ menu "CALalarm"
 
     config OTA_UPDATE_FIRMWARE_URL
         string "Firmware upgrade url endpoint"
-        default "http://host:80/path/to/clock.bin"
+        default "http://host.domain/path/to/alarm.bin"
         help
             URL of server which hosts the firmware image. (make sure it matches Kconfig in factory dir)
 
@@ -12,28 +12,40 @@ menu "CALalarm"
         help
             Maximum time for reception [sec]
 
-    config CALALARM_WS2812_PIN
-        int "GPIO# to WS2812 DATA"
-        default 18
+    config CALALARM_PHOTO3V_PIN
+        int "GPIO# from PHOTO3V transistor"
+        default 34
         help
-            Transmit GPIO pin on ESP32 that connects to DATA on the LED circle
+            GPIO pin on ESP32 that connects from the PHOTO3V transistor.
 
-    config CALALARM_WS2812_COUNT
-        int "Number of LEDs"
-        default 60
+    config CALALARM_ALARM_OFF_PIN
+        int "GPIO# to ALARM_OFF button"
+        default 32
         help
-            Number of WS2812 pixels on LED circle
+            GPIO pin on ESP32 that connects from the ALARM_OFF button.
+
+    config CALALARM_PIEZO3V_PIN
+        int "GPIO# to PIEZO3V transistor"
+        default 27
+        help
+            GPIO pin on ESP32 that connects to the PIEZO3V transistor.
+
+    config CALALARM_HAPTIC3V_PIN
+        int "GPIO# to HAPTIC3V transistor"
+        default 12
+        help
+            GPIO pin on ESP32 that connects to the HAPTIC3V transistor.
 
     config CALALARM_GAS_CALENDAR_URL
         string "Google script uri"
-        default "https://script.google.com/macros/s/YOUR_UNIQ_KEY/exec"
+        default "https://script.google.com/macros/s/YOUR_UNIQUE_ID/exec"
         help
             Public URL of the Google Apps script that supplies JSON of the
             calendar events.
 
     config CALALARM_GAS_INTERVAL
         int "Polling interval for Google Apps Script"
-        default 2
+        default 12
         help
             Number of minutes between polling the calendar events using Google Apps Script.
             When using push notifications this can be as high as e.g. 60 minutes.

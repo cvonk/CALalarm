@@ -17,11 +17,25 @@
 #include <freertos/task.h>
 #include <driver/rmt.h>
 #include <cJSON.h>
+#include <driver/adc.h>
+#include <soc/adc_channel.h>
 
 #include "display_task.h"
+
 #include "ipc/ipc.h"
 #include "ssd1306.h"
 #include "font8x8_basic.h"
+
+// ADC Channels (ACD1 channel 6 is GPIO26 on ESP32)
+#if CONFIG_IDF_TARGET_ESP32
+# if (CONFIG_CALALARM_PHOTO3V_PIN == 34)
+#   define ADC1_CHANNEL  (ADC1_GPIO34_CHANNEL)
+# else
+#  error "unsupported GPIO"
+# endif
+#else 
+# error "unsupported target"
+#endif
 
 static char const * const TAG = "display_task";
 static ipc_t * _ipc;
@@ -142,82 +156,38 @@ _init_oled(SSD1306_t * const dev)
 }
 
 void
-_update_oled(SSD1306_t * const dev)
+_update_oled(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
-	ssd1306_display_text(dev, 0, "SSD1306 128x32", 14, false);
-	ssd1306_display_text(dev, 1, "Hello World!!", 13, false);
-	ssd1306_clear_line(dev, 2, true);
-	ssd1306_clear_line(dev, 3, true);
-	ssd1306_display_text(dev, 2, "SSD1306 128x32", 14, true);
-	ssd1306_display_text(dev, 3, "Hello World!!", 13, true);
+    struct tm nowTm;
+    localtime_r(&now, &nowTm);
 
-#if 0
-	// Fade Out
-	for(int contrast=0xff;contrast>0;contrast=contrast-0x20) {
-		ssd1306_contrast(dev, contrast);
-		vTaskDelay(40);
-	}
-#endif
+    char str[15];
+    snprintf(str, sizeof(str), "%02d:%02d", nowTm.tm_hour, nowTm.tm_min);
+    ssd1306_clear_line(dev, 0, false);
+	ssd1306_display_text(dev, 0, str, strlen(str), false);
 
-/*
-    NtpTime::ntptime_t const time = ntpTime.getTime();
-    GoogleCalEvent::alarm_t const alarm = googleCalEvent.getAlarm();
-
-    oled.clearDisplay();
-    oled.setCursor(0, 0);
-
-    if (time.status != NtpTime::timeNeedsSync) {
-        oled.drawBitmap(SSD1306_LCDWIDTH - 16, 0, timeSyncBitmap, 16, 8, WHITE);
-    }
-
-    if (alarm.status != GoogleCalEvent::alarmNeedsSync) {
-        oled.drawBitmap(SSD1306_LCDWIDTH - 16, 8, alarmSyncBitmap, 16, 8, WHITE);
-    }
-
-    if (time.status == NtpTime::timeNotSet) {
-        oled.print("Waiting for time");
+    ssd1306_clear_line(dev, 1, false);
+    if (event->valid) {
+        struct tm startTm;
+        localtime_r(&event->start, &startTm);
+        snprintf(str, sizeof(str), "%02d:%02d %s", startTm.tm_hour, startTm.tm_min, event->title);
+    	ssd1306_display_text(dev, 3, str, strlen(str), false);
     } else {
-        oled.setTextSize(3);
-        if (time.hour12 < 10) {
-            oled.print(" ");
-        }
-        oled.print(time.hour12); oled.print(":");
-        if (time.minute < 10) {
-            oled.print("0");
-        }
-        oled.print(time.minute);
-        oled.setTextSize(1);
-        oled.print(time.hour12pm ? "PM" : "AM");
+        char const no_alarm[] = "No alarm set";
+    	ssd1306_display_text(dev, 3, no_alarm, strlen(no_alarm), false);
     }
+}
 
-    int const alarmHour = alarm.alarmTime / 60;
-    int const alarmMinute = alarm.alarmTime % 60;
+void
+_update_buzzer(time_t const now, event_t const * const event, ipc_t * ipc)
+{
+    struct tm nowTm, startTm;
+    localtime_r(&now, &nowTm);
+    localtime_r(&event->start, &startTm);
 
-    oled.setCursor(0, SSD1306_LCDHEIGHT - 8);
-    if (alarm.status == GoogleCalEvent::alarmNotSet) {
-        oled.print("No alarm set");
-    } else {
-        oled.print(alarmHour); oled.print(":");
-        if (alarmMinute < 10) {
-            oled.print("0");
-        }
-        oled.print(alarmMinute);
-        oled.print(" ");
-        oled.print(alarm.title);
+    if (event->valid && nowTm.tm_hour == startTm.tm_hour && nowTm.tm_min == startTm.tm_min) {
+        sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
     }
-
-    int const light = analogRead(0);
-    oled.dim(light < 50);
-
-    if (time.status != NtpTime::timeNotSet &&
-        alarm.status != GoogleCalEvent::alarmNotSet &&
-        alarmHour == time.hour24 && alarmMinute == time.minute && time.second == 0 && buzzer.isOff())
-    {
-        buzzer.start();
-    }
-
-    oled.display();  // write the cached commands to display
-*/
 }
 
 void
@@ -225,37 +195,40 @@ display_task(void * ipc_void)
 {
     _ipc = ipc_void;
 
-    event_t * const event = (event_t *) malloc(sizeof(event_t));
-    assert(event);
-
     SSD1306_t dev;
     _init_oled(&dev);
 
-
-/*
-    buzzer.begin();
-
-    pinMode(BUTTON_B_GPIO, INPUT_PULLUP);
-    pinMode(BUTTON_C_GPIO, INPUT_PULLUP);
-    pinMode(HAPTIC_GPIO, OUTPUT);        
-*/
-
-    _update_oled(&dev);
-
+    event_t event = {};
     time_t now;
-    time_t const loopInSec = 60;  // how often the while-loop runs [msec]
+//    time_t const loopInSec = 60;  // how often the while-loop runs [sec]
+    time_t const loopInSec = 1;  // how often the while-loop runs [sec]
+
+    // init A/D converter
+    ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL, ADC_ATTEN_DB_0));  // measures 0.10 to 0.95 Volts
+
+    //sendToBuzzer(TO_BUZZER_MSGTYPE_START, _ipc);
+
     while (1) {
+
+        int const brightness = adc1_get_raw(ADC1_CHANNEL);
+
+        ESP_LOGI(TAG, "brightness=%u", brightness);
 
         // if there was an calendar update then apply it
 
         toDisplayMsg_t msg;
         if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInSec * 1000 / portTICK_PERIOD_MS)) == pdPASS) {
-            (void)_json2event(msg.data, &now, event); // translate from serialized JSON "msg" to C representation "events"
+
+            (void)_json2event(msg.data, &now, &event); // translate from serialized JSON `msg` to `event`
             free(msg.data);
-            ESP_LOGI(TAG, "Update");
+
+            ESP_LOGI(TAG, "Update tod");
             _setTime(now);
         } else {
             _getTime(&now);
         }
+
+        _update_oled(&dev, now, &event);
+        _update_buzzer(now, &event, _ipc);
     }
 }

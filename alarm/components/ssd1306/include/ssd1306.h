@@ -100,7 +100,7 @@ typedef struct {
 } SSD1306_t;
 
 void ssd1306_init(SSD1306_t * dev, int width, int height);
-void ssd1306_display_text(SSD1306_t * dev, int page, char * text, int text_len, bool invert);
+void ssd1306_display_text(SSD1306_t * const dev, int const page, char const * const text, int const text_len, bool const invert);
 void ssd1306_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
 void ssd1306_clear_screen(SSD1306_t * dev, bool invert);
 void ssd1306_clear_line(SSD1306_t * dev, int page, bool invert);
