@@ -197,31 +197,21 @@ display_task(void * ipc_void)
 {
     _ipc = ipc_void;
 
+    // init OLED display
     SSD1306_t dev;
     _init_oled(&dev);
 
-    ssd1306_clear_line(&dev, 0, false);
-    ssd1306_clear_line(&dev, 1, false);
-    ssd1306_clear_line(&dev, 2, false);
-    ssd1306_display_text_x3(&dev, 0, "2", 1, false);
-
     event_t event = {};
     time_t now;
-//    time_t const loopInSec = 60;  // how often the while-loop runs [sec]
     time_t const loopInSec = 10;  // how often the while-loop runs [sec]
 
     // init A/D converter
     ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL, ADC_ATTEN_DB_0));  // measures 0.10 to 0.95 Volts
 
-    //sendToBuzzer(TO_BUZZER_MSGTYPE_START, _ipc);
-
     while (1) {
 
         int const brightness = adc1_get_raw(ADC1_CHANNEL);
-
         ESP_LOGI(TAG, "brightness=%u", brightness);
-
-        // if there was an calendar update then apply it
 
         toDisplayMsg_t msg;
         if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInSec * 1000 / portTICK_PERIOD_MS)) == pdPASS) {
