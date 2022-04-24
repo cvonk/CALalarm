@@ -1,13 +1,13 @@
 {
-  "name": "opnpool",
-  "version": "1.2.4",
-  "description": "OPNpool integrates the traditional Pool Controller into our smart hom",
+  "name": "calalarm",
+  "version": "1.1.0",
+  "description": "CALalarm integrates the traditional Pool Controller into our smart home",
   "dependencies": {
     "esp-idf": "4.4"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cvonk/OPNpool"
+    "url": "https://github.com/cvonk/CALalarm"
   },
   "author": "Coert Vonk"
 }

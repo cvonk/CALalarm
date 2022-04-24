@@ -39,7 +39,6 @@
 
 #include "display_task.h"
 #include "buzzer_task.h"
-#include "mqtt_task.h"
 
 static char const * const TAG = "main_app";
 
@@ -191,11 +190,9 @@ app_main()
     static ipc_t ipc;
     ipc.toClientQ = xQueueCreate(2, sizeof(toClientMsg_t));
     ipc.toDisplayQ = xQueueCreate(2, sizeof(toDisplayMsg_t));
-    ipc.toMqttQ = xQueueCreate(2, sizeof(toMqttMsg_t));
     ipc.toBuzzerQ = xQueueCreate(2, sizeof(toBuzzerMsg_t));
     ipc.dev.connectCnt.wifi = 0;
-    ipc.dev.connectCnt.mqtt = 0;
-    assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toMqttQ);
+    assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toBuzzerQ);
 
     _connect2wifi_and_start_httpd(&ipc);
 
@@ -205,5 +202,4 @@ app_main()
     xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&buzzer_task, "buzzer_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&https_client_task, "https_client_task", 4096, &ipc, 5, NULL);
-    xTaskCreate(&mqtt_task, "mqtt_task", 2*4096, &ipc, 5, NULL);
 }

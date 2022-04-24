@@ -1,7 +1,7 @@
 SPDXVersion: SPDX-2.1
 DataLicense: GPL-3.0-or-later
-Creator: Sander Vonk
+Creator: Coert Vonk
 PackageName: CALalarm
-PackageOriginator: Sander Vonk
-PackageHomePage: https://github.com/sandervonk/CALalarm/
+PackageOriginator: Coert Vonk
+PackageHomePage: https://github.com/cvonk/CALalarm/
 PackageLicenseDeclared: LICENSE

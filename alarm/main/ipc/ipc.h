@@ -20,43 +20,16 @@
 typedef struct ipc_t {
     QueueHandle_t toClientQ;
     QueueHandle_t toDisplayQ;
-    QueueHandle_t toMqttQ;
     QueueHandle_t toBuzzerQ;
     struct dev {
         char ipAddr[WIFI_DEVIPADDR_LEN];
         char name[WIFI_DEVNAME_LEN];
         struct connectCnt {
             uint wifi;
-            uint mqtt;
         } connectCnt;
     } dev;
 
 } ipc_t;
-
-// to mqtt
-
-typedef enum toMqttMsgType_t {
-    TO_MQTT_MSGTYPE_RESTART,
-    TO_MQTT_MSGTYPE_PUSH,
-    TO_MQTT_MSGTYPE_WHO,
-    TO_MQTT_MSGTYPE_DBG,
-} toMqttMsgType_t;
-
-typedef struct toMqttMsg_t {
-    toMqttMsgType_t dataType;
-    char * data;  // must be freed by recipient
-} toMqttMsg_t;
-
-// from mqtt
-
-typedef enum fromMqttMsgType_t {
-    FROM_MQTT_MSGTYPE_CTRL
-} fromMqttMsgType_t;
-
-typedef struct fromMqttMsg_t {
-    fromMqttMsgType_t dataType;
-    char * data;  // must be freed by recipient
-} fromMqttMsg_t;
 
 // to display
 
@@ -94,5 +67,4 @@ typedef struct toBuzzerMsg_t {
 
 void sendToClient(toClientMsgType_t const dataType, char const * const data, ipc_t const * const ipc);
 void sendToDisplay(toDisplayMsgType_t const dataType, char const * const data, ipc_t const * const ipc);
-void sendToMqtt(toMqttMsgType_t const dataType, char const * const data, ipc_t const * const ipc);
 void sendToBuzzer(toBuzzerMsgType_t const dataType, ipc_t const * const ipc);

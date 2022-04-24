@@ -65,8 +65,6 @@ _httpd_google_push_handler(httpd_req_t * req)
         ESP_LOGI(TAG, "Google push notification");
 
         sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
-        sendToMqtt(TO_MQTT_MSGTYPE_PUSH, "{ \"response\": \"pushed by Google\" }", ipc);
-
     }
     free(buf);
     httpd_resp_sendstr(req, "thank you");

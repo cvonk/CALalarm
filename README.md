@@ -17,7 +17,7 @@ Features:
   - [x] Button stops the alarm
   - [x] Supports over-the-air updates [^1]
   - [x] Easily one-time provisioning from an Android phone [^1]
-  - [x] Integrates with MQTT
+  - [x] Can integrate with MQTT
   - [x] Open source!
 
 ## Software
@@ -63,14 +63,13 @@ Now, copy the `alarm/main/Kconfig.example` to `alarm/main/Kconfig` and paste the
 
 As we see in the next sections, the ESP32 does a `HTTP GET` on this URL. That way it retrieves a list of upcoming events from your calendar, and update the OLED display accordingly.
 
-
 ### ESP32 Device
 
 In `menuconfig`, scroll down to CALalarm and select "Use hardcoded Wi-Fi credentials" and specify the SSID and password of your Wi-Fi access point.
 
 ```bash
 git clone https://github.com/cvonk/CALalarm.git
-cd CALalarm/clock
+cd CALalarm/alarm
 idf.py set-target esp32
 idf.py menuconfig
 idf.py flash
