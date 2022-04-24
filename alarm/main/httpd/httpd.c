@@ -1,10 +1,22 @@
 /**
  * @brief HTTP endpoint for Google Push notifications (triggered by calander event changes)
  *
- * CLOSED SOURCE, NOT FOR PUBLIC RELEASE
- * (c) Copyright 2020, Sander and Coert Vonk
- * All rights reserved. Use of copyright notice does not imply publication.
- * All text above must be included in any redistribution
+ * © Copyright 2016, 2022, Sander and Coert Vonk
+ * 
+ * This file is part of CALalarm.
+ * 
+ * CALalarm is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * CALalarm is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with CALalarm. 
+ * If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
 #include <string.h>
