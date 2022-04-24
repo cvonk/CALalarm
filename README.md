@@ -1,166 +1,106 @@
-# OBSOLETE, SEE FULL_INSTALL   
-CALalarm
+# CALalarm
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/CALalarm)](https://github.com/cvonk/CALalarm/discussions)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/CALalarm?include_prereleases&logo=DocuSign&logoColor=%23fff)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/cvonk/CALalarm/esp-idf)
 ![GitHub](https://img.shields.io/github/license/cvonk/CALalarm)
 
-The CALalarm runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
+## There is no better feeling than not having to set an alarm
 
-It can be used as anything from a decorative/interactive art piece to a normal clock that can remind you of upcoming appointments in a fun and cleanly designed way.
+![Assembled](media/assembled.jpg)
+Picture is from old ESP8266 based version.
 
-I used this to remind me of upcoming appointments once thatschool moved online.
+Features:
 
-![Backward facing glass clock with LED circle](media/forward_facing_250px.jpg)
-![Forward facing glass clock with LED circle](media/backward_facing_250px.jpg)
-
-## Features:
-
-  - [x] Shows calendar events in different colors using an LED circle placed behind the faceplate of a clock.
-  - [x] Push notifications for timely updates to calendar changes. [^1]
-  - [x] Over-the-air (OTA) updates [^1]
-  - [x] WiFi provisioning using phone app [^1]
-  - [x] Remote restart, and version information (using MQTT)
-  - [x] Core dump over MQTT to aid debugging [^1]
+  - [x] Shows the time and first event of the day.
+  - [x] Piezo and haptic to wake you up
+  - [x] Button stops the alarm
+  - [x] Supports over-the-air updates [^1]
+  - [x] Easily one-time provisioning from an Android phone [^1]
+  - [x] Integrates with MQTT
   - [x] Open source!
 
-[^1]: Available with the full install as described in [`FULL_INSTALL.md`](FULL_INSTALL.md)
+## Software
 
-The full fledged project installation method is described in the [`FULL_INSTALL.md`](FULL_INSTALL.md). Before you go down that road, you may want to give it a quick spin to see what it can do. The remainder of this README will walk you through this.
-
-## Parts
-
-Two approaches can be used when deciding the look of you clock. One of which is to have the ring fully visible, with the other being to use the leds as an artsy-backlight.
-
-![Internals of Backward facing glass clock with LED circle](media/forward_facing_int_250px.jpg)
-![Internals of Forward facing glass clock with LED circle](media/backward_facing_int_250px.jpg)
-
-- [ ] RGB LED Pixel Ring containing 60 WS2812B SMD5050 addressable LEDs (e.g. "Chinly Addressable 60 Pixel LED Ring"). These WS2812B pixels are 5V, and draw about 60 mA each at full brightness. If you plan to use it in a bedroom, you probably want less bright LEDS such as WS2812 (without the "B").
-- [ ] ESP32 board with 4 MByte flash memory, such as [ESP32-DevKitC-VB](https://www.espressif.com/en/products/devkits/esp32-devkitc/overview), LOLIN32 or MELIFE ESP32.
-- [ ] 5 Volt, 3 Amp power adapter
-- [ ] Capacitor (470 uF / 16V)
-- [ ] Resistor (470 Ohm)
-- [ ] Analog clock with glass face plate (e.g. Tempus TC6065S Wall Clock with Glass Metal Frame or a Selko 11" Brushed Metal Wall Clock)
-- [ ] Optional frosting spray (e.g. Rust-Oleum Frosted Glass Spray Paint)
-- [ ] Glass glue (e.g. Loctite Glass Glue)
-- [ ] Molex 2 Pin Connectors
-
-The Data-in of the LED circle should be driven with 5V +/- 0.5V, but we seem to get away with using the 3.3V output from ESP32 with a 470 Ohms resistor in series. We didn't notice a diffeence when using a level shifter.
-
-## Connect
-
-> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO WARRENTIES.**
-
-Connect the 5 Volt adapter to the ESP32 and LED strip. Connect the data from the ESP32 module to the LED circle as shown below. 
-
-| ESP32 module | LED circle   |
-|:-------------|:-------------|
-| `GPIO#18`    | WS2812 DATA  |
-
-## Google Apps Script
-
-The software is a symbiosis between a Google Apps Script and firmware running on the ESP32. The script reads events from your Google Calendar and presents them as JSON to the ESP32 device.
-
-The ESP32 microcontroller calls a [Google Apps Script](https://developers.google.com/apps-script/guides/web) that retrieve a list of upcoming events from your calendar and returns them as a JSON object. As we see later, the ESP32 will update the LEDs based on this JSON object.
-
-To create the Webapp:
-  - Create a new project on [script.google.com](https://script.google.com);
-  - Copy and paste the code from `script\Code.gs`
-  - Resources > Advanced Google Services > enable the `Calendar API`
-  - File > Manage Versions, Save New Version
-  - Publish > Deploy as web app
-      - version = select the version you just saved
-      - execute as = `Me`
-      - who has access = `anyone`, even anonymous (make sure you understand what the script does!)
-      - You will get a warning, because the app has not been verified by Google
-      - Once you clock `Deploy`, it presents you with two URLs
-          - one that ends in `/exec`, the published version, based on the version you chose.
-          - one that ends in `/dev`, the most recent saved code, intended for quick testing during development.
-      - Copy the `main/Kconfig.example` to `main/Kconfig` and copy the URL that ends in `/exec` to `main/Kconfig` under `CLOCK_GAS_CALENDAR_URL`.
-
-The script is more involved as needed because also supports *Push Notifications*.
-
-## Build
-
-Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository,.
+Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.  Start with a fresh clone:
 
 ```bash
 git clone --recursive https://github.com/cvonk/CALalarm.git
 ```
 
-or using `ssh`
+### Google Apps Script
+
+The software is a symbiosis between [Google Apps Script](https://developers.google.com/apps-script/guides/web) and firmware running on the ESP32. The script reads the alarm event from your Google Calendar and presents it as JSON to the ESP32 device.
+
+To create the Web app:
+  - Create a new project on [script.google.com](https://script.google.com);
+  - Rename the project to e.g. `CALalarm-doGet`
+  - Copy and paste the code from `script\Code.js`
+  - Add the `Google Calendar API` service .
+  - Select the function `test` and click `Debug`. This will ask for permissions. There will not be any output.
+  - Click `Deploy` and chose `New deployment`, choose
+    - Service tye = `Web app`
+    - Execute as = `Me`
+    - Who has access = `Anyone`, make sure you understand what the script does!
+    - Copy the Web app URL to the clipboard
+
+Open the URL in a web browser. You should get a reply like
+```json
+{
+    "time": "2022-04-20 12:56:37",
+    "pushId": "some_id_or_not",
+    "events": [
+        { 
+            "start": "2022-04-20 10:30:00",
+            "end": "2022-04-20 15:45:00",
+            "title": "School"
+        },
+    ]
+}
+```
+
+Now, copy the `alarm/main/Kconfig.example` to `alarm/main/Kconfig` and paste the URL that ends in `/exec` to `alarm/main/Kconfig` under `CALALARM_GAS_CALENDAR_URL`.
+
+As we see in the next sections, the ESP32 does a `HTTP GET` on this URL. That way it retrieves a list of upcoming events from your calendar, and update the OLED display accordingly.
+
+
+### ESP32 Device
+
+In `menuconfig`, scroll down to CALalarm and select "Use hardcoded Wi-Fi credentials" and specify the SSID and password of your Wi-Fi access point.
+
 ```bash
-git clone --recursive git@github.com:cvonk/CALalarm.git
+git clone https://github.com/cvonk/CALalarm.git
+cd CALalarm/clock
+idf.py set-target esp32
+idf.py menuconfig
+idf.py flash
 ```
 
-From within Microsoft Visual Code (VScode), add the [Microsoft's C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). Then add the [Espressif IDF extension &ge;4.4](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension). ESP-IDF will automatically start its configuration
+## Hardware
 
-From VScode:
+> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO WARRENTIES.**
 
-  * Change to the `CALalarm/clock` folder.
-  * Connect your ESP32 module, and configure the device and COM port (press the F1-key and select "ESP-IDF: Device configurion")
-  * Edit the configuration (press the F1-key, select "ESP-IDF: SDK configuration editor" and scroll down to CALalarm)
-      * Select "Use hardcoded Wi-Fi credentials" and specify the SSID and password of your Wi-Fi access point.
-      * If you have a MQTT broker set up, select "Use hardcoded MQTT URL" and specify the URL in the format `mqtt://username:passwd@host.domain:1883`
-  * Start the build-upload-monitor cycle (press the F1-key and select "ESP-IDF: Build, Flash and start a monitor on your device").
+### Schematic
 
-The device will appear on your network segment as `calalarm.local`. If MQTT is configured, it will publish MQTT messages.
+![Schematic](hardware/CALalarm-r1.svg)
 
-## ESP32 Design
 
-The functionality is divided into:
-- `HTTPS Client Task`, that polls the Google Apps Script for calendar events
-- `Display Task`, that uses the Remote Control Module on the ESP32 to drive the LED strip.
-- `HTTP POST Server`, to listen to push notifications from Google.
-- `OTA Task`, that check for updates upon reboot
-- `Reset Task`, when GPIO#0 is low for 3 seconds, it erases the WiFi credentials so that the board can be re-provisioned using your phone.
+### Bill of materials
 
-The different parts communicate using FreeRTOS mailboxes.
+| Name          | Description                                             | Sugggested mfr/part#       |
+|---------------|---------------------------------------------------------|----------------------------|
+| FEATHER-ESP32 | HUZZAH32 ESP32 Feather, stack hdr (ESP-WROOM-32 16MB)   | [Adafruit 3619](https://www.digikey.com/en/products/detail/adafruit-industries-llc/3619/8119806?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAzAGwCMAnCALoC%2BQA)
+| FEATHER-OLED  | FeatherWing OLED - 128X32                               | [Adafruit 2900](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2900/5810890?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAnAAzEgC6AvkA)
+| PROTO         | FeatherWing Prototyping Add-on                          | [Adafruit 2884](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2884/5777193?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHIQCwgC6AvkA)
+| M1            | Vibrating mini motor disc, 5V                           | [Adafruit 1201](https://www.digikey.com/en/products/detail/adafruit-industries-llc/1201/5353637?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAjGAAwEgC6AvkA)
+| X1            | Buzzer 5V, DC, breadboard friendly                      | [Adafruit 1536](https://www.adafruit.com/product/1536) or [TDK PS1420P02CT](https://www.digikey.com/en/products/detail/tdk-corporation/PS1420P02CT/935931)
+| Q1            | Photo Transistor, HW5P-1                                | [Adafruit 2831](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2831/8323990?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHAMwCMIAugL5A)
+| R1, R2, R3    | Resistor, 1 k&Ohm;, 1/4 W, axial                        | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
+| R4            | Resistor, 1.5 k&Ohm; 1/4 W, axial                       | [Yageo CFR-25JB-52-1K5](https://www.digikey.com/en/products/detail/yageo/CFR-25JB-52-1K5/132)]
+| T1, T2        | NPN transistor, 40V / 600mA, TO92-3                     | [NTE Electronics PN2222A](https://www.digikey.com/en/products/detail/nte-electronics-inc/PN2222A/11655004)
+| D1            | Diode, gen purp, 100V / 200MA, DO35                     | [onsemi 1N4148](https://www.digikey.com/en/products/detail/onsemi/1N4148/458603)
 
-## Using
-
-To easily see what version of the software is running on the device, or what WiFi network it is connected to, the firmware contains a MQTT client.
-> MQTT stands for MQ Telemetry Transport. It is a publish/subscribe, extremely simple and lightweight messaging protocol, designed for constrained devices and low-bandwidth, high-latency or unreliable networks. [FAQ](https://mqtt.org/faq)
-
-One the clock is on the wall, we can still keep a finger on the pulse using
-  - Remote restart, and version information (using MQTT)
-  - Core dump over MQTT to aid debugging
-
-Control messages are:
-- `who`, can be used for device discovery when sent to the group topic
-- `restart`, to restart the ESP32 (and check for OTA updates)
-- `int N`, to change scan/adv interval to N milliseconds
-- `mode`, to report the current scan/adv mode and interval
-
-Control messages can be sent:
-- `calalarm/ctrl`, a group topic that all devices listen to, or
-- `calalarm/ctrl/DEVNAME`, only `DEVNAME` listens to this topic.
-
-Here `DEVNAME` is either a programmed device name, such as `esp32-1`, or `esp32_XXXX` where the `XXXX` are the last digits of the MAC address. Device names are assigned based on the BLE MAC address in `main/main.c`.
-
-Messages can be sent to a specific device, or the whole group:
-```
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calalarm/ctrl/esp32-1" -m "who"
-mosquitto_pub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calalarm/ctrl" -m "who"
-```
-
-### MQTT
-
-Both replies to control messages and unsolicited data such as debug output and coredumps are reported using MQTT topic `calalarm/data/SUBTOPIC/DEVNAME`.
-
-Subtopics are:
-- `who`, response to `who` control messages,
-- `restart`, response to `restart` control messages,
-- `dbg`, general debug messages, and
-- `coredump`, GDB ELF base64 encoded core dump.
-
-E.g. to listen to all data, use:
-```
-mosquitto_sub -h {BROKER} -u {USERNAME} -P {PASSWORD} -t "calalarm/data/#" -v
-```
-where `#` is a the MQTT wildcard character.
 
 ## Feedback
 
-We love to hear from you. Please use the Github discussions to provide feedback.
+I love to hear from you. Please use the Github discussions to provide feedback.
