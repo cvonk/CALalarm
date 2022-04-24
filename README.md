@@ -1,9 +1,10 @@
 # OBSOLETE, SEE FULL_INSTALL   
 CALalarm
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/sandervonk/CALalarm)](https://github.com/sandervonk/CALalarm/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/sandervonk/CALalarm?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub](https://img.shields.io/github/license/sandervonk/CALalarm)
+[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/CALalarm)](https://github.com/cvonk/CALalarm/discussions)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/CALalarm?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/cvonk/CALalarm/esp-idf)
+![GitHub](https://img.shields.io/github/license/cvonk/CALalarm)
 
 The CALalarm runs on an Espressif EPS32 microcontroller and shows upcoming events on a LED circle incorporated in a clock faceplate.
 
@@ -85,12 +86,12 @@ The script is more involved as needed because also supports *Push Notifications*
 Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository,.
 
 ```bash
-git clone --recursive https://github.com/sandervonk/CALalarm.git
+git clone --recursive https://github.com/cvonk/CALalarm.git
 ```
 
 or using `ssh`
 ```bash
-git clone --recursive git@github.com:sandervonk/CALalarm.git
+git clone --recursive git@github.com:cvonk/CALalarm.git
 ```
 
 From within Microsoft Visual Code (VScode), add the [Microsoft's C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools). Then add the [Espressif IDF extension &ge;4.4](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension). ESP-IDF will automatically start its configuration
