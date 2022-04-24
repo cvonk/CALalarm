@@ -10,6 +10,3 @@
 [submodule "factory/components/factory_ble_prov"]
 	path = factory/components/factory_ble_prov
 	url = git@github.com:cvonk/ESP32_factory-ble-prov.git
-[submodule "alarm/components/coredump_to_server"]
-	path = alarm/components/coredump_to_server
-	url = git@github.com:cvonk/ESP32_coredump-to-server.git
