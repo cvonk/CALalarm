@@ -89,16 +89,16 @@ idf.py flash
 
 | Name          | Description                                             | Sugggested mfr/part#       |
 |---------------|---------------------------------------------------------|----------------------------|
-| FEATHER-ESP32 | HUZZAH32 ESP32 Feather, stack hdr (ESP-WROOM-32 16MB)   | [Adafruit 3619](https://www.digikey.com/en/products/detail/adafruit-industries-llc/3619/8119806?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAzAGwCMAnCALoC%2BQA)
-| FEATHER-OLED  | FeatherWing OLED - 128X32                               | [Adafruit 2900](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2900/5810890?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAnAAzEgC6AvkA)
-| PROTO         | FeatherWing Prototyping Add-on                          | [Adafruit 2884](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2884/5777193?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHIQCwgC6AvkA)
+| PCB1          | Feather huzzah32 ESP32 (ESP-WROOM-32)                   | [Adafruit 3619](https://www.digikey.com/en/products/detail/adafruit-industries-llc/3619/8119806?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAzAGwCMAnCALoC%2BQA)
+| PCB2          | FeatherWing OLED, 128x32                                | [Adafruit 2900](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2900/5810890?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAnAAzEgC6AvkA)
+| PROTO         | FeatherWing prototyping add-on                          | [Adafruit 2884](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2884/5777193?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHIQCwgC6AvkA)
 | M1            | Vibrating mini motor disc, 5V                           | [Adafruit 1201](https://www.digikey.com/en/products/detail/adafruit-industries-llc/1201/5353637?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAjGAAwEgC6AvkA)
-| X1            | Buzzer 5V, DC, breadboard friendly                      | [Adafruit 1536](https://www.adafruit.com/product/1536) or [TDK PS1420P02CT](https://www.digikey.com/en/products/detail/tdk-corporation/PS1420P02CT/935931)
+| X1            | Piezo buzzer 5V AC, breadboard friendly                 | [Adafruit 1536](https://www.adafruit.com/product/1536) or [TDK PS1420P02CT](https://www.digikey.com/en/products/detail/tdk-corporation/PS1420P02CT/935931)
 | Q1            | Photo Transistor, HW5P-1                                | [Adafruit 2831](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2831/8323990?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHAMwCMIAugL5A)
-| R1, R2, R3    | Resistor, 1 k&Ohm;, 1/4 W, axial                        | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
-| R4            | Resistor, 1.5 k&Ohm; 1/4 W, axial                       | [Yageo CFR-25JB-52-1K5](https://www.digikey.com/en/products/detail/yageo/CFR-25JB-52-1K5/132)]
+| R1, R2, R3    | Resistor, 1 k&ohm;, 1/4 W, axial                        | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
+| R4            | Resistor, 1.5 k&ohm;, 1/4 W, axial                       | [Yageo CFR-25JB-52-1K5](https://www.digikey.com/en/products/detail/yageo/CFR-25JB-52-1K5/132)]
 | T1, T2        | NPN transistor, 40V / 600mA, TO92-3                     | [NTE Electronics PN2222A](https://www.digikey.com/en/products/detail/nte-electronics-inc/PN2222A/11655004)
-| D1            | Diode, gen purp, 100V / 200MA, DO35                     | [onsemi 1N4148](https://www.digikey.com/en/products/detail/onsemi/1N4148/458603)
+| D1            | Diode, general purpose, 100V / 200mA, DO35                     | [onsemi 1N4148](https://www.digikey.com/en/products/detail/onsemi/1N4148/458603)
 
 
 ## Feedback
