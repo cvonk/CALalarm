@@ -34,24 +34,25 @@ function bytesToString(bytes) {
 function _alarmTime(event) {
 
     if (event == undefined ) {
-      return undefined;
+        return undefined;
     }
     let reminders = event.getPopupReminders();  
     // known issue: method getPopupReminders() doesn't return anything if there is only one reminder
     if (reminders.length == 0) {
         reminder = 0;   
     }
-    date = new Date(event.getStartTime().getTime()-reminders[0]*60*1000);
+    const longestReminder = Math.max.apply(null, reminders)*60*1000;
+    const date = new Date(event.getStartTime().getTime() - longestReminder);
     return date;
 }
 
 function _findFirstAlarm(events) {
 
-    let firstAlarmTime = undefined;
     let firstAlarmIdx = undefined;
+    let firstAlarmTime = undefined;
     
     for (let ii = 0; ii < events.length; ii++) {
-        let event=events[ii];    
+        const event = events[ii];    
         switch(event.getMyStatus()) {
             case CalendarApp.GuestStatus.OWNER:
             case CalendarApp.GuestStatus.YES:
@@ -59,7 +60,6 @@ function _findFirstAlarm(events) {
                 let alarmTime = _alarmTime(event);
                 if (firstAlarmTime == undefined || alarmTime < firstAlarmTime) {
                     firstAlarmIdx = ii;
-                    firstAlarmTime = alarmTime;
                 }
                 break;
             default:
@@ -143,7 +143,7 @@ function doGet(e) {
 
     let cal = CalendarApp.getCalendarById(email);
     if (!cal) {
-      return ContentService.createTextOutput('no access to calendar (' + email + ')');
+        return ContentService.createTextOutput('no access to calendar (' + email + ')');
     }
 
     // find the first event today that I'm participating in, and that is not an all day event.
@@ -173,8 +173,9 @@ function doGet(e) {
     };
     if (event) {
         json.events.push({
+            "alarm": localTime(_alarmTime(event)),
             "start": localTime(event.getStartTime()),
-            "end": localTime(event.getEndTime()),
+            "stop": localTime(event.getEndTime()),
             "title": event.getTitle()
         });
     }
