@@ -197,9 +197,15 @@ app_main()
     // start this early, so it can show status updates
     xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
 
-    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup("WiFi connect .."), &ipc);
-    _connect2wifi_and_start_httpd(&ipc);
+    // show running version
+    esp_partition_t const * const running_part = esp_ota_get_running_partition();
+    esp_app_desc_t running_app_info;
+    ESP_ERROR_CHECK(esp_ota_get_partition_description(running_part, &running_app_info));
+    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup(running_app_info.version), &ipc);
 
+    _connect2wifi_and_start_httpd(&ipc);
+    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup("gCalendar .."), &ipc);
+ 
     // from here the tasks take over
 
     xTaskCreate(&ota_update_task, "ota_update_task", 4096, "clock", 5, NULL);

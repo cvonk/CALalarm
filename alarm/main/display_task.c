@@ -55,6 +55,7 @@ static ipc_t * _ipc;
 typedef struct {
     bool valid;
     char * title;
+    char * pushId;
     time_t alarm, start, stop;
 } PACK8 event_t;
 
@@ -117,6 +118,15 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
     }
     *time = _str2time(jsonTime->valuestring);
 
+    cJSON const *const jsonPushId = cJSON_GetObjectItem(jsonRoot, "pushId");
+    if (!jsonPushId || jsonPushId->type != cJSON_String) {
+        ESP_LOGW(TAG, "JSON.event[0].pushId is missing or not a String");
+        free(event->pushId);
+        event->pushId = NULL;
+    } else {
+        event->pushId = strdup(jsonPushId->valuestring);
+    }
+
     cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "events");
     if (!jsonEvents || jsonEvents->type != cJSON_Array) {
         ESP_LOGE(TAG, "JSON.events is missing or not an Array");
@@ -153,6 +163,7 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
             return 0;
         }
 
+        free(event->title);
         event->valid = true;
         event->title = strdup(jsonTitleObj->valuestring);
         event->alarm = _str2time(jsonAlarmObj->valuestring);
@@ -187,11 +198,28 @@ _oled_set_status(SSD1306_t * const dev, char const * const str)
     ssd1306_display_text(dev, 3, str, strlen(str), false);
 }
 
-void
+static void
+_copy_title_pad(event_t const * const event, char * const str, size_t const size)
+{
+    bool past_end = false;
+    for (uint8_t ii = 0; ii < size - 1; ii++) {
+        if (event->title[ii] != '\0' && !past_end) {
+            str[ii] = event->title[ii];
+        } else {
+            str[ii] = ' ';
+            past_end = true;
+        }
+    }
+    str[size - 1] = '\0';
+}
+
+static void
 _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
     struct tm nowTm;
     localtime_r(&now, &nowTm);
+
+    uint8_t const hr = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
 
     char str[17] = "               A";
     if (nowTm.tm_hour >= 12) {
@@ -201,13 +229,21 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
     str[15] = 'M';
 	ssd1306_display_text(dev, 1, str, strlen(str), false);
 
-    snprintf(str, sizeof(str), "%2d:%02d", nowTm.tm_hour % 12, nowTm.tm_min);
+    snprintf(str, sizeof(str), "%2d:%02d", hr, nowTm.tm_min);
 	ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
 
     if (event->valid) {
         struct tm alarmTm;
         localtime_r(&event->alarm, &alarmTm);  // or maybe event->start to show the apt time itself
-        snprintf(str, sizeof(str), "%02d:%02d %s", alarmTm.tm_hour, alarmTm.tm_min, event->title);
+
+        char title[9];
+        _copy_title_pad(event, title, sizeof(title));
+        
+        char link_symbol[] = { 0x03, 0x04, 0x00 };
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+        snprintf(str, sizeof(str), "%02d:%02d %s%s", alarmTm.tm_hour, alarmTm.tm_min, title, 1 || event->pushId ? link_symbol : "");
+#pragma GCC diagnostic pop
         _oled_set_status(dev, str);
     } else {
     	_oled_set_status(dev, "No alarm set");
@@ -247,8 +283,6 @@ display_task(void * ipc_void)
 
     // init A/D converter
     ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL, ADC_ATTEN_DB_0));  // measures 0.10 to 0.95 Volts
-
-    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup("gCalendar .."), _ipc);
 
     while (1) {
 
