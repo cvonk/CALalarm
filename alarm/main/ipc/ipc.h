@@ -35,6 +35,7 @@ typedef struct ipc_t {
 
 typedef enum toDisplayMsgType_t {
     TO_DISPLAY_MSGTYPE_JSON,
+    TO_DISPLAY_MSGTYPE_STATUS
 } toDisplayMsgType_t;
 
 typedef struct toDisplayMsg_t {
@@ -45,7 +46,7 @@ typedef struct toDisplayMsg_t {
 // to client
 
 typedef enum toClientMsgType_t {
-    TO_CLIENT_MSGTYPE_TRIGGER,
+    TO_CLIENT_MSGTYPE_TRIGGER
 } toClientMsgType_t;
 
 typedef struct toClientMsg_t {

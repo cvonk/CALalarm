@@ -14,7 +14,9 @@
     "files.associations": {
         "esp_http_server.h": "c",
         "complex": "c",
-        "buzzer_task.h": "c"
+        "buzzer_task.h": "c",
+        "sstream": "c",
+        "regex": "c"
     },
     "cmake.configureOnOpen": false
 }

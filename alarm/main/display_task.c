@@ -55,7 +55,7 @@ static ipc_t * _ipc;
 typedef struct {
     bool valid;
     char * title;
-    time_t start, end;
+    time_t alarm, start, stop;
 } PACK8 event_t;
 
 void
@@ -83,14 +83,14 @@ _str2time(char * str) {  // e.g. 2020-06-25T22:30:16.329Z
 }
 
 static void
-_setTime(time_t const time)
+_set_time(time_t const time)
 {
     struct timeval tv = { .tv_sec = time, .tv_usec = 0};
     settimeofday(&tv, NULL);
 }
 
 static time_t
-_getTime(time_t * time_)
+_get_time(time_t * time_)
 {
     return time(time_);
 }
@@ -132,26 +132,32 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
         }
 
         cJSON const *const jsonTitleObj = cJSON_GetObjectItem(jsonEvent, "title");
+        cJSON const *const jsonAlarmObj = cJSON_GetObjectItem(jsonEvent, "alarm");
         cJSON const *const jsonStartObj = cJSON_GetObjectItem(jsonEvent, "start");
-        cJSON const *const jsonEndObj = cJSON_GetObjectItem(jsonEvent, "end");
+        cJSON const *const jsonStopObj = cJSON_GetObjectItem(jsonEvent, "stop");
 
         if (!jsonTitleObj || jsonTitleObj->type != cJSON_String) {
             ESP_LOGE(TAG, "JSON.event[0].title is missing or not a String");
+            return 0;
+        }
+        if (!jsonAlarmObj || jsonAlarmObj->type != cJSON_String) {
+            ESP_LOGE(TAG, "JSON.event[0].alarm is missing or not a String");
             return 0;
         }
         if (!jsonStartObj || jsonStartObj->type != cJSON_String) {
             ESP_LOGE(TAG, "JSON.event[0].start is missing or not a String");
             return 0;
         }
-        if (!jsonEndObj || jsonEndObj->type != cJSON_String) {
+        if (!jsonStopObj || jsonStopObj->type != cJSON_String) {
             ESP_LOGE(TAG, "JSON.event[0].end is missing or not a String");
             return 0;
         }
 
         event->valid = true;
         event->title = strdup(jsonTitleObj->valuestring);
+        event->alarm = _str2time(jsonAlarmObj->valuestring);
         event->start = _str2time(jsonStartObj->valuestring);
-        event->end = _str2time(jsonEndObj->valuestring);
+        event->stop = _str2time(jsonStopObj->valuestring);
     }
 
     cJSON_Delete(jsonRoot);
@@ -159,7 +165,7 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
 }
 
 void
-_init_oled(SSD1306_t * const dev)
+_oled_init(SSD1306_t * const dev)
 {
     i2c_master_init(dev, CONFIG_SSD1306_SDA_GPIO, CONFIG_SSD1306_SCL_GPIO, CONFIG_SSD1306_RESET_GPIO);
 	ssd1306_init(dev, 128, 32);
@@ -167,39 +173,55 @@ _init_oled(SSD1306_t * const dev)
 	ssd1306_contrast(dev, 0xff);
 }
 
+static void
+_oled_set_brightness(SSD1306_t * const dev, int const brightness)
+{
+    ESP_LOGI(TAG, "brightness=%u", brightness);
+    ssd1306_contrast(dev, brightness);  // 2nd arg is uint8_t
+}
+
+static void
+_oled_set_status(SSD1306_t * const dev, char const * const str)
+{
+    ssd1306_clear_line(dev, 3, false);
+    ssd1306_display_text(dev, 3, str, strlen(str), false);
+}
+
 void
-_update_oled(SSD1306_t * const dev, time_t const now, event_t const * const event)
+_oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
     struct tm nowTm;
     localtime_r(&now, &nowTm);
 
-    char str[15];
-    snprintf(str, sizeof(str), "%02d:%02d", nowTm.tm_hour, nowTm.tm_min);
-    ssd1306_clear_line(dev, 0, false);
-    ssd1306_clear_line(dev, 1, false);
-    ssd1306_clear_line(dev, 2, false);
+    char str[17] = "               A";
+    if (nowTm.tm_hour >= 12) {
+        str[15] = 'P';
+    }
+	ssd1306_display_text(dev, 0, str, strlen(str), false);
+    str[15] = 'M';
+	ssd1306_display_text(dev, 1, str, strlen(str), false);
+
+    snprintf(str, sizeof(str), "%2d:%02d", nowTm.tm_hour % 12, nowTm.tm_min);
 	ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
 
-    ssd1306_clear_line(dev, 3, false);
     if (event->valid) {
-        struct tm startTm;
-        localtime_r(&event->start, &startTm);
-        snprintf(str, sizeof(str), "%02d:%02d %s", startTm.tm_hour, startTm.tm_min, event->title);
-    	ssd1306_display_text(dev, 3, str, strlen(str), false);
+        struct tm alarmTm;
+        localtime_r(&event->start, &alarmTm);  // or maybe event->start to show the apt time itself
+        snprintf(str, sizeof(str), "%02d:%02d %s", alarmTm.tm_hour, alarmTm.tm_min, event->title);
+        _oled_set_status(dev, str);
     } else {
-        char const no_alarm[] = "No alarm set";
-    	ssd1306_display_text(dev, 3, no_alarm, strlen(no_alarm), false);
+    	_oled_set_status(dev, "No alarm set");
     }
 }
 
 void
-_update_buzzer(time_t const now, event_t const * const event, ipc_t * ipc)
+_buzzer_update(time_t const now, event_t const * const event, ipc_t * ipc)
 {
-    struct tm nowTm, startTm;
+    struct tm nowTm, alarmTm;
     localtime_r(&now, &nowTm);
-    localtime_r(&event->start, &startTm);
+    localtime_r(&event->alarm, &alarmTm);
 
-    if (event->valid && nowTm.tm_hour == startTm.tm_hour && nowTm.tm_min == startTm.tm_min) {
+    if (event->valid && nowTm.tm_hour == alarmTm.tm_hour && nowTm.tm_min == alarmTm.tm_min) {
         sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
     }
 }
@@ -211,33 +233,41 @@ display_task(void * ipc_void)
 
     // init OLED display
     SSD1306_t dev;
-    _init_oled(&dev);
+    _oled_init(&dev);
 
     event_t event = {};
-    time_t now;
+    time_t now = 0;
     time_t const loopInSec = 10;  // how often the while-loop runs [sec]
 
     // init A/D converter
     ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL, ADC_ATTEN_DB_0));  // measures 0.10 to 0.95 Volts
 
-    while (1) {
+    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup("gCalendar .."), _ipc);
 
-        int const brightness = adc1_get_raw(ADC1_CHANNEL);
-        ESP_LOGI(TAG, "brightness=%u", brightness);
+    while (1) {
 
         toDisplayMsg_t msg;
         if (xQueueReceive(_ipc->toDisplayQ, &msg, (TickType_t)(loopInSec * 1000 / portTICK_PERIOD_MS)) == pdPASS) {
 
-            (void)_json2event(msg.data, &now, &event); // translate from serialized JSON `msg` to `event`
+            switch(msg.dataType) {
+                case TO_DISPLAY_MSGTYPE_JSON:
+                    (void)_json2event(msg.data, &now, &event); // translate from serialized JSON `msg` to `event`
+                    ESP_LOGI(TAG, "Update tod");
+                    _set_time(now);
+                    break;
+                case TO_DISPLAY_MSGTYPE_STATUS:
+                    _oled_set_status(&dev, msg.data);
+                    break;
+            }
             free(msg.data);
-
-            ESP_LOGI(TAG, "Update tod");
-            _setTime(now);
         } else {
-            _getTime(&now);
+            _get_time(&now);
         }
 
-        _update_oled(&dev, now, &event);
-        _update_buzzer(now, &event, _ipc);
+        if (now) {  // tod is initialized
+            _oled_update(&dev, now, &event);
+            _buzzer_update(now, &event, _ipc);
+        }
+        _oled_set_brightness(&dev, adc1_get_raw(ADC1_CHANNEL));
     }
 }

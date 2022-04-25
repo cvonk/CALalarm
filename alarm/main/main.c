@@ -194,12 +194,15 @@ app_main()
     ipc.dev.connectCnt.wifi = 0;
     assert(ipc.toDisplayQ && ipc.toClientQ && ipc.toBuzzerQ);
 
+    // start this early, so it can show status updates
+    xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
+
+    sendToDisplay(TO_DISPLAY_MSGTYPE_STATUS, strdup("WiFi connect .."), &ipc);
     _connect2wifi_and_start_httpd(&ipc);
 
     // from here the tasks take over
 
     xTaskCreate(&ota_update_task, "ota_update_task", 4096, "clock", 5, NULL);
-    xTaskCreate(&display_task, "display_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&buzzer_task, "buzzer_task", 4096, &ipc, 5, NULL);
     xTaskCreate(&https_client_task, "https_client_task", 4096, &ipc, 5, NULL);
 }

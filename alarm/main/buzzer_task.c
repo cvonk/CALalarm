@@ -135,10 +135,6 @@ buzzer_task(void * ipc_void)
     bool buzzer_on = false;
     bool haptic_active = false;
 
-#if 0
-    sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
-#endif
-
     while (1) {
         toBuzzerMsg_t msg;
         if (xQueueReceive(ipc->toBuzzerQ, &msg, (TickType_t)(1000 / portTICK_PERIOD_MS)) == pdPASS) {
