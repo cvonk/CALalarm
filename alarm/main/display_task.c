@@ -206,7 +206,7 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
 
     if (event->valid) {
         struct tm alarmTm;
-        localtime_r(&event->start, &alarmTm);  // or maybe event->start to show the apt time itself
+        localtime_r(&event->alarm, &alarmTm);  // or maybe event->start to show the apt time itself
         snprintf(str, sizeof(str), "%02d:%02d %s", alarmTm.tm_hour, alarmTm.tm_min, event->title);
         _oled_set_status(dev, str);
     } else {
@@ -217,12 +217,18 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
 void
 _buzzer_update(time_t const now, event_t const * const event, ipc_t * ipc)
 {
+    time_t last = 0;
     struct tm nowTm, alarmTm;
     localtime_r(&now, &nowTm);
     localtime_r(&event->alarm, &alarmTm);
 
+    // 2BD make sure we don't sent this multiple times in the same minute
+
     if (event->valid && nowTm.tm_hour == alarmTm.tm_hour && nowTm.tm_min == alarmTm.tm_min) {
-        sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
+        if (difftime(last, now) > 60) {  //  make sure it doesn't go off multiple times in same minute
+            sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
+            last = now;
+        }
     }
 }
 
