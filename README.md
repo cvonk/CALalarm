@@ -27,6 +27,7 @@ Clone the repository and its submodules to a local directory. The `--recursive` 
 git clone https://github.com/cvonk/CALalarm.git
 cd CALalarm/alarm
 cp alarm/main/Kconfig.example alarm/main/Kconfig
+cp factory/main/Kconfig.example factory/main/Kconfig
 ```
 
 ### Google Apps Script
@@ -48,11 +49,12 @@ To create the Web app:
 Open the URL in a web browser. You should get a reply like
 ```json
 {
-    "time": "2022-04-20 12:56:37",
+    "time": "2022-04-20 13:18:37",
     "pushId": "some_id_or_not",
     "events": [
         { 
-            "start": "2022-04-20 10:30:00",
+            "alarm": "2022-04-20 08:05:00",
+            "start": "2022-04-20 08:35:00",
             "end": "2022-04-20 15:45:00",
             "title": "School"
         },
