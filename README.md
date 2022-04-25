@@ -1,23 +1,20 @@
 # CALalarm
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/CALalarm)](https://github.com/cvonk/CALalarm/discussions)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/CALalarm?include_prereleases&logo=DocuSign&logoColor=%23fff)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cvonk/CALalarm)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/cvonk/CALalarm/esp-idf)
 ![GitHub](https://img.shields.io/github/license/cvonk/CALalarm)
 
 ## There is no better feeling than not having to set an alarm
 
 ![Assembled](media/assembled.jpg)
-Picture is from old ESP8266 based version.
+Picture is from an old ESP8266 based version.
 
 Features:
 
   - [x] Shows the time and first event of the day.
-  - [x] Piezo and haptic to wake you up
-  - [x] Button stops the alarm
-  - [x] Supports over-the-air updates [^1]
-  - [x] Easily one-time provisioning from an Android phone [^1]
-  - [x] Can integrate with MQTT
+  - [x] Piezo and haptic to wake you up.
+  - [x] Button stops the alarm.
   - [x] Open source!
 
 ## Software
@@ -81,23 +78,29 @@ idf.py flash
 
 ### Schematic
 
-![Schematic](hardware/CALalarm-r1.svg)
+Haptic motor `M1` draws 100 mA at 5 Volts.  The GPIO "on" voltage of the ESP32 is typically about 3.1 Volt and can supply up to 20 mA. To drive the transistor to saturation we need a V<sub>be</sub> = 0.6 Volt. This implies that for I<sub>b</sub> = 2.5 mA, we need a resistor `R3` of 1 k&ohm;. Note that, diode `D1` protects for reverse back current due to the motor inductance.
 
+The piezo buzzer `X1`, when driven with a 5 V<sub>pp</sub> 1 kHz square wave, also draws 100 mA. That implies that the base resistor `R1` should be 1 k&ohm; as well. Resistor `R2` to discharge the capacitive piezo element, as specified in the [datasheet](https://product.tdk.com/en/system/files?file=dam/doc/product/sw_piezo/sw_piezo/piezo-buzzer/catalog/piezoelectronic_buzzer_ps_en.pdf).
+
+For the current limiting resistor `R4`, we just follow the test setup from the datasjeet with a value of 1 k&ohm;. 
+
+![Schematic](hardware/CALalarm-r1.svg)
 
 ### Bill of materials
 
+Instead of the Feather products, you can probably also use the 0.96" OLED ESP-WROOM-32 ESP32 Display 2.4GHz WiFi Bluetooth Dual Mode Development Board Display for Arduino.
+
 | Name          | Description                                             | Sugggested mfr/part#       |
 |---------------|---------------------------------------------------------|----------------------------|
-| PCB1          | Feather huzzah32 ESP32 (ESP-WROOM-32)                   | [Adafruit 3619](https://www.digikey.com/en/products/detail/adafruit-industries-llc/3619/8119806?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAzAGwCMAnCALoC%2BQA)
+| PCB1          | Feather Huzzah32 ESP32 (ESP-WROOM32)                   | [Adafruit 3619](https://www.digikey.com/en/products/detail/adafruit-industries-llc/3619/8119806?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAzAGwCMAnCALoC%2BQA)
 | PCB2          | FeatherWing OLED, 128x32                                | [Adafruit 2900](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2900/5810890?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAnAAzEgC6AvkA)
 | PROTO         | FeatherWing prototyping add-on                          | [Adafruit 2884](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2884/5777193?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHIQCwgC6AvkA)
 | M1            | Vibrating mini motor disc, 5V                           | [Adafruit 1201](https://www.digikey.com/en/products/detail/adafruit-industries-llc/1201/5353637?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEAjGAAwEgC6AvkA)
-| X1            | Piezo buzzer 5V AC, breadboard friendly                 | [Adafruit 1536](https://www.adafruit.com/product/1536) or [TDK PS1420P02CT](https://www.digikey.com/en/products/detail/tdk-corporation/PS1420P02CT/935931)
-| Q1            | Photo Transistor, HW5P-1                                | [Adafruit 2831](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2831/8323990?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHAMwCMIAugL5A)
-| R1, R2, R3    | Resistor, 1 k&ohm;, 1/4 W, axial                        | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
-| R4            | Resistor, 1.5 k&ohm;, 1/4 W, axial                       | [Yageo CFR-25JB-52-1K5](https://www.digikey.com/en/products/detail/yageo/CFR-25JB-52-1K5/132)]
+| X1            | Piezo buzzer 5V AC, through hole                 | [Adafruit 160](https://www.adafruit.com/product/160) or [TDK PS1240P02BT](https://www.digikey.com/en/products/detail/tdk-corporation/PS1240P02BT/935930)
 | T1, T2        | NPN transistor, 40V / 600mA, TO92-3                     | [NTE Electronics PN2222A](https://www.digikey.com/en/products/detail/nte-electronics-inc/PN2222A/11655004)
+| Q1            | Phototransistor, HW5P-1                                 | [Adafruit 2831](https://www.digikey.com/en/products/detail/adafruit-industries-llc/2831/8323990?s=N4IgTCBcDaIIIBMCGAzATgVwJYBcAEYAHAMwCMIAugL5A)
 | D1            | Diode, general purpose, 100V / 200mA, DO35                     | [onsemi 1N4148](https://www.digikey.com/en/products/detail/onsemi/1N4148/458603)
+| R1 - R4    | Resistor, 1 k&ohm;, 1/4 W, axial                           | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
 
 
 ## Feedback
