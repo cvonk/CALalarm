@@ -7,7 +7,7 @@
 
 ## There is no better feeling than not having to set an alarm
 
-![Assembled](media/front.png)
+![Assembled](media/front_resize.png)
 
 ESP32 OLED alarm clock that syncs with Google Calendar.
 
@@ -110,9 +110,9 @@ Instead of the Feather products, you can probably also use a generic 0.96" OLED 
 
 Assemble the circuit on the prototyping board. Then stack `PCB1` and `PCB2` on top of it.
 
-![Assembled](media/assembly-1.jpg) 
-![Assembled](media/assembly-2.jpg)
-![Assembled](media/assembly-3.jpg)
+![Assembled](media/assembly-1_resize.jpg) 
+![Assembled](media/assembly-2_resize.jpg)
+![Assembled](media/assembly-3_resize.jpg)
 
 ## Feedback
 
