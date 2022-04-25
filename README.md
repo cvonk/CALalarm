@@ -7,7 +7,7 @@
 
 ## There is no better feeling than not having to set an alarm
 
-![Assembled](media/assembled.jpg)
+![Assembled](media/esp8266.jpg)
 Picture is from an old ESP8266 based version.
 
 Features:
@@ -102,9 +102,13 @@ For the phototransistor `Q1`, the value for the current limiting resistor `R4` i
 
 Instead of the Feather products, you can probably also use a generic 0.96" OLED ESP-WROOM-32 development board.
 
-### Assemble
+### Putting it together
 
 Assemble the circuit on the prototyping board. Then stack `PCB1` and `PCB2` on top of it.
+
+![Assembled](media/assembly-1.jpg) 
+![Assembled](media/assembly-2.jpg)
+![Assembled](media/assembly-3.jpg)
 
 ## Feedback
 
