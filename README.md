@@ -19,10 +19,12 @@ Features:
 
 ## Software
 
-Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.  Start with a fresh clone:
+Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.  Start with a fresh clone, and copy the `Kconfig.example`.
 
 ```bash
-git clone --recursive https://github.com/cvonk/CALalarm.git
+git clone https://github.com/cvonk/CALalarm.git
+cd CALalarm/alarm
+cp alarm/main/Kconfig.example alarm/main/Kconfig
 ```
 
 ### Google Apps Script
@@ -31,7 +33,7 @@ The software is a symbiosis between [Google Apps Script](https://developers.goog
 
 To create the Web app:
   - Create a new project on [script.google.com](https://script.google.com);
-  - Rename the project to e.g. `CALalarm-doGet`
+  - Rename the project to e.g. `CALalarm_doGet`
   - Copy and paste the code from `script\Code.js`
   - Add the `Google Calendar API` service .
   - Select the function `test` and click `Debug`. This will ask for permissions. There will not be any output.
@@ -56,17 +58,15 @@ Open the URL in a web browser. You should get a reply like
 }
 ```
 
-Now, copy the `alarm/main/Kconfig.example` to `alarm/main/Kconfig` and paste the URL that ends in `/exec` to `alarm/main/Kconfig` under `CALALARM_GAS_CALENDAR_URL`.
+Then, paste the URL to `alarm/main/Kconfig` as the value of `CALALARM_GAS_CALENDAR_URL`.
 
-As we see in the next sections, the ESP32 does a `HTTP GET` on this URL. That way it retrieves a list of upcoming events from your calendar, and update the OLED display accordingly.
+As we see in the next sections, the ESP32 does a `HTTP GET` on this URL, to retrieve a list of upcoming events from your calendar.
 
 ### ESP32 Device
 
 In `menuconfig`, scroll down to CALalarm and select "Use hardcoded Wi-Fi credentials" and specify the SSID and password of your Wi-Fi access point.
 
 ```bash
-git clone https://github.com/cvonk/CALalarm.git
-cd CALalarm/alarm
 idf.py set-target esp32
 idf.py menuconfig
 idf.py flash
@@ -78,17 +78,15 @@ idf.py flash
 
 ### Schematic
 
-Haptic motor `M1` draws 100 mA at 5 Volts.  The GPIO "on" voltage of the ESP32 is typically about 3.1 Volt and can supply up to 20 mA. To drive the transistor to saturation we need a V<sub>be</sub> = 0.6 Volt. This implies that for I<sub>b</sub> = 2.5 mA, we need a resistor `R3` of 1 k&ohm;. Note that, diode `D1` protects for reverse back current due to the motor inductance.
+Haptic motor `M1` draws 100 mA at 5 Volts.  The GPIO "on" voltage of the ESP32 is typically 3.1 Volt and can supply up to 20 mA. To drive the PN2222A transistor to saturation, we need a V<sub>be</sub> = 0.6 Volt. This implies that for I<sub>b</sub> of 2.5 mA, the base resistor `R3` should be 1 k&ohm;. Note that, diode `D1` protects for reverse back current due to the motor inductance.
 
-The piezo buzzer `X1`, when driven with a 5 V<sub>pp</sub> 1 kHz square wave, also draws 100 mA. That implies that the base resistor `R1` should be 1 k&ohm; as well. Resistor `R2` to discharge the capacitive piezo element, as specified in the [datasheet](https://product.tdk.com/en/system/files?file=dam/doc/product/sw_piezo/sw_piezo/piezo-buzzer/catalog/piezoelectronic_buzzer_ps_en.pdf).
+The piezo buzzer `X1`, when driven with a 5 V<sub>pp</sub> 1 kHz square wave, also draws 100 mA. That implies that the base resistor `R1` should be 1 k&ohm; as well. We use resistor `R2`, to discharge the capacitive piezo element, as specified in the datasheet.
 
-For the current limiting resistor `R4`, we just follow the test setup from the datasjeet with a value of 1 k&ohm;. 
+For the phototransistor `Q1`, the value for the current limiting resistor `R4` is taken from the test setup in its datasheet. 
 
 ![Schematic](hardware/CALalarm-r1.svg)
 
 ### Bill of materials
-
-Instead of the Feather products, you can probably also use the 0.96" OLED ESP-WROOM-32 ESP32 Display 2.4GHz WiFi Bluetooth Dual Mode Development Board Display for Arduino.
 
 | Name          | Description                                             | Sugggested mfr/part#       |
 |---------------|---------------------------------------------------------|----------------------------|
@@ -102,6 +100,11 @@ Instead of the Feather products, you can probably also use the 0.96" OLED ESP-WR
 | D1            | Diode, general purpose, 100V / 200mA, DO35                     | [onsemi 1N4148](https://www.digikey.com/en/products/detail/onsemi/1N4148/458603)
 | R1 - R4    | Resistor, 1 k&ohm;, 1/4 W, axial                           | [Yageo CFR-25JT-52-1K](https://www.digikey.com/en/products/detail/yageo/CFR-25JT-52-1K/13921014)
 
+Instead of the Feather products, you can probably also use a generic 0.96" OLED ESP-WROOM-32 development board.
+
+### Assemble
+
+Assemble the circuit on the prototyping board. Then stack `PCB1` and `PCB2` on top of it.
 
 ## Feedback
 
