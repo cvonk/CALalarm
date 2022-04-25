@@ -7,8 +7,7 @@
 
 ## There is no better feeling than not having to set an alarm
 
-![Assembled](media/esp8266.jpg)
-Picture is from an old ESP8266 based version.
+![Assembled](media/front.png)
 
 Features:
 
