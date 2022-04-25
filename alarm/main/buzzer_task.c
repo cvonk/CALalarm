@@ -41,10 +41,7 @@ sendToBuzzer(toBuzzerMsgType_t const dataType, ipc_t const * const ipc)
     toDisplayMsg_t msg = {
         .dataType = dataType,
     };
-    if (xQueueSendToBack(ipc->toBuzzerQ, &msg, 0) != pdPASS) {
-        ESP_LOGE(TAG, "toBuzzerQ full");
-        free(msg.data);
-    }
+    xQueueSendToBack(ipc->toBuzzerQ, &msg, 0);
 }
 
 static void inline IRAM_ATTR
@@ -53,10 +50,7 @@ _sendToBuzzerFromISR(toBuzzerMsgType_t const dataType, ipc_t const * const ipc)
     toDisplayMsg_t msg = {
         .dataType = dataType,
     };
-    
-    if (xQueueSendToBackFromISR(ipc->toBuzzerQ, &msg, 0) != pdPASS) {
-        free(msg.data);
-    }
+    xQueueSendToBackFromISR(ipc->toBuzzerQ, &msg, 0);
 }
 
 static void IRAM_ATTR
@@ -91,7 +85,8 @@ _button_isr_init(ipc_t * const ipc)
 #define LEDC_OUTPUT_IO          CONFIG_CALALARM_PIEZO3V_PIN // Define the output GPIO
 #define LEDC_CHANNEL            LEDC_CHANNEL_0
 #define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
-#define LEDC_DUTY               (4095) // 50% duty cycle ((2 ** 13) - 1) * 50% = 4095
+//#define LEDC_DUTY               (4095) // 50% duty cycle ((2 ** 13) - 1) * 50% = 4095
+#define LEDC_DUTY               (409) // 5% duty cycle ((2 ** 13) - 1) * 5% = 409
 #define LEDC_FREQUENCY          (1000) // Frequency [Hz]
 
 static void
@@ -138,7 +133,11 @@ buzzer_task(void * ipc_void)
     ESP_ERROR_CHECK( gpio_config(&io_conf) );
 
     bool buzzer_on = false;
-    uint8_t buzzer_cnt = 0;
+    bool haptic_active = false;
+
+#if 0
+    sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);
+#endif
 
     while (1) {
         toBuzzerMsg_t msg;
@@ -148,7 +147,7 @@ buzzer_task(void * ipc_void)
                 case TO_BUZZER_MSGTYPE_START:
                     ESP_LOGI(TAG, "rx start");
                     buzzer_on = true;
-                    buzzer_cnt = 0;
+                    haptic_active = true;
                     break;
                 case TO_BUZZER_MSGTYPE_STOP:
                     ESP_LOGI(TAG, "rx stop");
@@ -159,8 +158,9 @@ buzzer_task(void * ipc_void)
         if (buzzer_on) {
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-            gpio_set_level(CONFIG_CALALARM_HAPTIC3V_PIN, buzzer_cnt % 2);
-            buzzer_cnt++;
+            ESP_LOGW(TAG, "haptic=%d", haptic_active);
+            gpio_set_level(CONFIG_CALALARM_HAPTIC3V_PIN, haptic_active);
+            haptic_active =! haptic_active;
         } else {
             ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
             ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
