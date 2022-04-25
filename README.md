@@ -9,11 +9,14 @@
 
 ![Assembled](media/front.png)
 
+ESP32 OLED alarm clock that syncs with Google Calendar.
+
 Features:
 
   - [x] Shows the time and first event of the day.
-  - [x] Piezo and haptic to wake you up.
-  - [x] Button stops the alarm.
+  - [x] Learns the alarm time from Google Calendar.
+  - [x] Piezo and/or haptic to wake you up.
+  - [x] Button stops the noise.
   - [x] Open source!
 
 ## Software

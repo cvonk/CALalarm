@@ -1,7 +1,7 @@
 {
   "name": "calalarm",
-  "version": "1.1.0",
-  "description": "CALalarm integrates the traditional Pool Controller into our smart home",
+  "version": "1.0",
+  "description": "ESP32 OLED alarm clock that syncs with Google Calendar",
   "dependencies": {
     "esp-idf": "4.4"
   },
