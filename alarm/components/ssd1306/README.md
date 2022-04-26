@@ -1,7 +1,6 @@
 Origin: [https://github.com/nopnop2002/esp-idf-ssd1306](https://github.com/nopnop2002/esp-idf-ssd1306)
 
 # esp-idf-ssd1306
-
 SSD1306/SH1106 driver for esp-idf
 
 I used [this](https://github.com/yanbe/ssd1306-esp-idf-i2c) repository as a reference.   
@@ -11,32 +10,12 @@ I used [this](https://github.com/dhepper/font8x8) font file.
 esp-idf v4.4 or later.   
 This is because this version supports ESP32-C3.   
 
-# Installation for ESP32
+# Installation for
 
 ```
 git clone https://github.com/nopnop2002/esp-idf-ssd1306
-cd esp-idf-ssd1306/
-idf.py set-target esp32
-idf.py menuconfig
-idf.py flash
-```
-
-# Installation for ESP32-S2
-
-```
-git clone https://github.com/nopnop2002/esp-idf-ssd1306
-cd esp-idf-ssd1306/
-idf.py set-target esp32s2
-idf.py menuconfig
-idf.py flash
-```
-
-# Installation for ESP32-C3
-
-```
-git clone https://github.com/nopnop2002/esp-idf-ssd1306
-cd esp-idf-ssd1306/
-idf.py set-target esp32c3
+cd esp-idf-ssd1306/TextDemo/
+idf.py set-target {esp32/esp32s2/esp32s3/esp32c3}
 idf.py menuconfig
 idf.py flash
 ```
