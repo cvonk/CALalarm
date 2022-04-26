@@ -7,7 +7,7 @@
 
 ## There is no better feeling than not having to set an alarm
 
-![Assembled](media/front_resize.png)
+![Assembled](media/front_resize.png?raw=true)
 
 ESP32 OLED alarm clock that syncs with Google Calendar.
 
