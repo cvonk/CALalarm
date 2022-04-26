@@ -286,35 +286,6 @@ chip</description>
 </package>
 </packages>
 <symbols>
-<symbol name="FRAME_LETTER_L">
-<frame x1="0" y1="0" x2="248.92" y2="185.42" columns="12" rows="17" layer="94" border-left="no" border-top="no" border-right="no" border-bottom="no"/>
-</symbol>
-<symbol name="FRAME_DOCFIELD">
-<wire x1="0" y1="0" x2="55.88" y2="0" width="0.1016" layer="94"/>
-<wire x1="101.6" y1="20.32" x2="55.88" y2="20.32" width="0.1016" layer="94"/>
-<wire x1="101.6" y1="20.32" x2="101.6" y2="15.24" width="0.1016" layer="94"/>
-<wire x1="101.6" y1="15.24" x2="101.6" y2="10.16" width="0.1016" layer="94"/>
-<wire x1="101.6" y1="10.16" x2="101.6" y2="5.08" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="5.08" x2="55.88" y2="0" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="0" x2="101.6" y2="0" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="20.32" x2="55.88" y2="15.24" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="15.24" x2="55.88" y2="10.16" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="10.16" x2="55.88" y2="5.08" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="5.08" x2="101.6" y2="5.08" width="0.1016" layer="94"/>
-<wire x1="101.6" y1="5.08" x2="101.6" y2="0" width="0.1016" layer="94"/>
-<text x="57.15" y="6.35" size="2.54" layer="94" font="vector">&gt;LAST_DATE_TIME</text>
-<text x="57.15" y="1.27" size="2.54" layer="94" font="vector">Sheet:</text>
-<text x="71.12" y="1.27" size="2.54" layer="94" font="vector">&gt;SHEET</text>
-<text x="57.15" y="11.43" size="2.54" layer="94" font="vector">&gt;DRAWING_NAME</text>
-<text x="100.33" y="11.43" size="2.54" layer="94" align="bottom-right">&gt;REV</text>
-<text x="2.54" y="1.27" size="2.54" layer="94">&gt;URL</text>
-<wire x1="55.88" y1="10.16" x2="101.6" y2="10.16" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="15.24" x2="101.6" y2="15.24" width="0.1016" layer="94"/>
-<wire x1="55.88" y1="20.32" x2="0" y2="20.32" width="0.1016" layer="94"/>
-<wire x1="0" y1="20.32" x2="0" y2="0" width="0.1016" layer="94"/>
-<text x="2.54" y="16.51" size="1.778" layer="94">&gt;DESCRIPTION</text>
-<text x="57.15" y="16.51" size="2.54" layer="94" font="vector">&gt;AUTHOR_NAME</text>
-</symbol>
 <symbol name="FEATHER-OLED-SCREEN">
 <wire x1="0" y1="12.7" x2="35.56" y2="12.7" width="0.254" layer="94"/>
 <wire x1="35.56" y1="12.7" x2="35.56" y2="0" width="0.254" layer="94"/>
@@ -416,22 +387,6 @@ chip</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="FRAME_LETTER_L">
-<gates>
-<gate name="G$1" symbol="FRAME_LETTER_L" x="0" y="0"/>
-<gate name="G$2" symbol="FRAME_DOCFIELD" x="147.32" y="0"/>
-</gates>
-<devices>
-<device name="">
-<technologies>
-<technology name="">
-<attribute name="AUTHOR_NAME" value="Coert Vonk" constant="no"/>
-<attribute name="DESCRIPTION" value="To enter description, right-clicking frame and select attributes" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="FEATHER-OLED" prefix="PCB">
 <description>Package buttons position and size approximate</description>
 <gates>
@@ -4411,12 +4366,6 @@ Read the BAT voltage from A13 and double it</text>
 </class>
 </classes>
 <parts>
-<part name="U$1" library="Coert Vonk" deviceset="FRAME_LETTER_L" device="">
-<attribute name="AUTHOR_NAME" value="Sander &amp; Coert Vonk"/>
-<attribute name="DESCRIPTION" value=""/>
-<attribute name="REV" value="v1.0"/>
-<attribute name="URL" value="https://github.com/cvonk/CALalarm"/>
-</part>
 <part name="T1" library="adafruit" deviceset="2N2222" device=""/>
 <part name="R1" library="resistor" deviceset="R-EU_" device="0411/15" value="1k"/>
 <part name="R2" library="resistor" deviceset="R-EU_" device="0411/15" value="1k"/>
@@ -4448,104 +4397,93 @@ Read the BAT voltage from A13 and double it</text>
 <sheets>
 <sheet>
 <plain>
-<text x="149.225" y="11.43" size="1.778" layer="97">Alarm clock based on ESP32 WiFi uController.
-Synchronizes the time and alarm with Google Calendar.</text>
 </plain>
 <instances>
-<instance part="U$1" gate="G$1" x="0" y="0" smashed="yes"/>
-<instance part="U$1" gate="G$2" x="147.32" y="0" smashed="yes">
-<attribute name="LAST_DATE_TIME" x="204.47" y="6.35" size="2.54" layer="94" font="vector"/>
-<attribute name="SHEET" x="218.44" y="1.27" size="2.54" layer="94" font="vector"/>
-<attribute name="DRAWING_NAME" x="204.47" y="11.43" size="2.54" layer="94" font="vector"/>
-<attribute name="URL" x="149.86" y="1.27" size="2.54" layer="94"/>
-<attribute name="DESCRIPTION" x="149.86" y="16.51" size="1.778" layer="94"/>
-<attribute name="AUTHOR_NAME" x="204.47" y="16.51" size="2.54" layer="94" font="vector"/>
+<instance part="T1" gate="G$1" x="129.54" y="71.12" smashed="yes">
+<attribute name="NAME" x="134.62" y="71.12" size="1.778" layer="95"/>
+<attribute name="VALUE" x="134.62" y="68.58" size="1.778" layer="96"/>
 </instance>
-<instance part="T1" gate="G$1" x="132.08" y="71.12" smashed="yes">
-<attribute name="NAME" x="137.16" y="71.12" size="1.778" layer="95"/>
-<attribute name="VALUE" x="137.16" y="68.58" size="1.778" layer="96"/>
+<instance part="R1" gate="G$1" x="121.92" y="71.12" smashed="yes">
+<attribute name="NAME" x="118.11" y="72.6186" size="1.778" layer="95"/>
+<attribute name="VALUE" x="118.11" y="67.818" size="1.778" layer="96"/>
 </instance>
-<instance part="R1" gate="G$1" x="124.46" y="71.12" smashed="yes">
-<attribute name="NAME" x="120.65" y="72.6186" size="1.778" layer="95"/>
-<attribute name="VALUE" x="120.65" y="67.818" size="1.778" layer="96"/>
+<instance part="R2" gate="G$1" x="144.78" y="86.36" smashed="yes" rot="R90">
+<attribute name="NAME" x="143.2814" y="82.55" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="148.082" y="82.55" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="R2" gate="G$1" x="147.32" y="86.36" smashed="yes" rot="R90">
-<attribute name="NAME" x="145.8214" y="82.55" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="150.622" y="82.55" size="1.778" layer="96" rot="R90"/>
+<instance part="X1" gate="G$1" x="132.08" y="86.36" smashed="yes">
+<attribute name="NAME" x="133.35" y="88.9" size="1.778" layer="95"/>
+<attribute name="VALUE" x="133.35" y="82.55" size="1.778" layer="96"/>
 </instance>
-<instance part="X1" gate="G$1" x="134.62" y="86.36" smashed="yes">
-<attribute name="NAME" x="135.89" y="88.9" size="1.778" layer="95"/>
-<attribute name="VALUE" x="135.89" y="82.55" size="1.778" layer="96"/>
+<instance part="GND1" gate="1" x="132.08" y="55.88" smashed="yes">
+<attribute name="VALUE" x="132.08" y="53.34" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND1" gate="1" x="134.62" y="55.88" smashed="yes">
-<attribute name="VALUE" x="134.62" y="53.34" size="1.778" layer="96" align="bottom-center"/>
+<instance part="U$3" gate="G$1" x="132.08" y="93.98" smashed="yes">
+<attribute name="VALUE" x="132.08" y="97.79" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="U$3" gate="G$1" x="134.62" y="93.98" smashed="yes">
-<attribute name="VALUE" x="134.62" y="97.79" size="1.778" layer="96" align="bottom-center"/>
+<instance part="U$4" gate="G$1" x="144.78" y="93.98" smashed="yes">
+<attribute name="VALUE" x="144.78" y="97.79" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="U$4" gate="G$1" x="147.32" y="93.98" smashed="yes">
-<attribute name="VALUE" x="147.32" y="97.79" size="1.778" layer="96" align="bottom-center"/>
+<instance part="U$2" gate="G$1" x="157.48" y="142.24" smashed="yes">
+<attribute name="VALUE" x="157.48" y="146.05" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="U$2" gate="G$1" x="154.94" y="167.64" smashed="yes">
-<attribute name="VALUE" x="154.94" y="171.45" size="1.778" layer="96" align="bottom-center"/>
+<instance part="GND2" gate="1" x="147.32" y="116.84" smashed="yes">
+<attribute name="VALUE" x="147.32" y="114.3" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND2" gate="1" x="144.78" y="142.24" smashed="yes">
-<attribute name="VALUE" x="144.78" y="139.7" size="1.778" layer="96" align="bottom-center"/>
+<instance part="M1" gate="G$1" x="175.26" y="86.36" smashed="yes">
+<attribute name="NAME" x="172.085" y="86.36" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="172.085" y="83.82" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="M1" gate="G$1" x="177.8" y="86.36" smashed="yes">
-<attribute name="NAME" x="174.625" y="86.36" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="174.625" y="83.82" size="1.778" layer="96" rot="R180"/>
+<instance part="D1" gate="G$1" x="187.96" y="86.36" smashed="yes" rot="R90">
+<attribute name="NAME" x="187.4774" y="81.28" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="192.1764" y="80.645" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="D1" gate="G$1" x="190.5" y="86.36" smashed="yes" rot="R90">
-<attribute name="NAME" x="190.0174" y="81.28" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="194.7164" y="80.645" size="1.778" layer="96" rot="R90"/>
+<instance part="PCB2" gate="+" x="55.88" y="124.46" smashed="yes">
+<attribute name="VALUE" x="55.88" y="137.795" size="1.778" layer="96"/>
+<attribute name="NAME" x="55.88" y="140.335" size="1.778" layer="95"/>
 </instance>
-<instance part="PCB2" gate="+" x="27.94" y="114.3" smashed="yes">
-<attribute name="VALUE" x="27.94" y="127.635" size="1.778" layer="96"/>
-<attribute name="NAME" x="27.94" y="130.175" size="1.778" layer="95"/>
+<instance part="PCB2" gate="P" x="185.42" y="129.54" smashed="yes">
+<attribute name="NAME" x="185.42" y="128.778" size="1.778" layer="95" align="bottom-center"/>
 </instance>
-<instance part="PCB2" gate="P" x="182.88" y="154.94" smashed="yes">
-<attribute name="NAME" x="182.88" y="154.178" size="1.778" layer="95" align="bottom-center"/>
+<instance part="T2" gate="G$1" x="172.72" y="71.12" smashed="yes">
+<attribute name="NAME" x="177.8" y="71.12" size="1.778" layer="95"/>
+<attribute name="VALUE" x="177.8" y="68.58" size="1.778" layer="96"/>
 </instance>
-<instance part="T2" gate="G$1" x="175.26" y="71.12" smashed="yes">
-<attribute name="NAME" x="180.34" y="71.12" size="1.778" layer="95"/>
-<attribute name="VALUE" x="180.34" y="68.58" size="1.778" layer="96"/>
+<instance part="R3" gate="G$1" x="165.1" y="71.12" smashed="yes">
+<attribute name="NAME" x="161.29" y="72.6186" size="1.778" layer="95"/>
+<attribute name="VALUE" x="161.29" y="67.818" size="1.778" layer="96"/>
 </instance>
-<instance part="R3" gate="G$1" x="167.64" y="71.12" smashed="yes">
-<attribute name="NAME" x="163.83" y="72.6186" size="1.778" layer="95"/>
-<attribute name="VALUE" x="163.83" y="67.818" size="1.778" layer="96"/>
+<instance part="GND3" gate="1" x="175.26" y="55.88" smashed="yes">
+<attribute name="VALUE" x="175.26" y="53.34" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND3" gate="1" x="177.8" y="55.88" smashed="yes">
-<attribute name="VALUE" x="177.8" y="53.34" size="1.778" layer="96" align="bottom-center"/>
+<instance part="U$5" gate="G$1" x="175.26" y="93.98" smashed="yes">
+<attribute name="VALUE" x="175.26" y="97.79" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="U$5" gate="G$1" x="177.8" y="93.98" smashed="yes">
-<attribute name="VALUE" x="177.8" y="97.79" size="1.778" layer="96" align="bottom-center"/>
+<instance part="U$6" gate="G$1" x="187.96" y="93.98" smashed="yes">
+<attribute name="VALUE" x="187.96" y="97.79" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="U$6" gate="G$1" x="190.5" y="93.98" smashed="yes">
-<attribute name="VALUE" x="190.5" y="97.79" size="1.778" layer="96" align="bottom-center"/>
+<instance part="+3V1" gate="G$1" x="147.32" y="144.78" smashed="yes">
+<attribute name="VALUE" x="147.32" y="146.05" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="+3V1" gate="G$1" x="144.78" y="170.18" smashed="yes">
-<attribute name="VALUE" x="144.78" y="171.45" size="1.778" layer="96" align="bottom-center"/>
+<instance part="+3V2" gate="G$1" x="185.42" y="144.78" smashed="yes">
+<attribute name="VALUE" x="185.42" y="146.05" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="+3V2" gate="G$1" x="182.88" y="170.18" smashed="yes">
-<attribute name="VALUE" x="182.88" y="171.45" size="1.778" layer="96" align="bottom-center"/>
+<instance part="GND4" gate="1" x="185.42" y="116.84" smashed="yes">
+<attribute name="VALUE" x="185.42" y="114.3" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND4" gate="1" x="182.88" y="142.24" smashed="yes">
-<attribute name="VALUE" x="182.88" y="139.7" size="1.778" layer="96" align="bottom-center"/>
+<instance part="R4" gate="G$1" x="205.74" y="66.04" smashed="yes" rot="R90">
+<attribute name="NAME" x="204.2414" y="62.23" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="209.042" y="62.23" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="R4" gate="G$1" x="208.28" y="66.04" smashed="yes" rot="R90">
-<attribute name="NAME" x="206.7814" y="62.23" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="211.582" y="62.23" size="1.778" layer="96" rot="R90"/>
+<instance part="GND5" gate="1" x="205.74" y="55.88" smashed="yes">
+<attribute name="VALUE" x="205.74" y="53.34" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND5" gate="1" x="208.28" y="55.88" smashed="yes">
-<attribute name="VALUE" x="208.28" y="53.34" size="1.778" layer="96" align="bottom-center"/>
+<instance part="Q1" gate="G$1" x="203.2" y="86.36" smashed="yes">
+<attribute name="NAME" x="208.28" y="86.36" size="1.778" layer="95"/>
+<attribute name="VALUE" x="208.28" y="83.82" size="1.778" layer="96"/>
 </instance>
-<instance part="Q1" gate="G$1" x="205.74" y="86.36" smashed="yes">
-<attribute name="NAME" x="210.82" y="86.36" size="1.778" layer="95"/>
-<attribute name="VALUE" x="210.82" y="83.82" size="1.778" layer="96"/>
-</instance>
-<instance part="+3V3" gate="G$1" x="208.28" y="96.52" smashed="yes">
-<attribute name="VALUE" x="208.28" y="97.79" size="1.778" layer="96" align="bottom-center"/>
+<instance part="+3V3" gate="G$1" x="205.74" y="96.52" smashed="yes">
+<attribute name="VALUE" x="205.74" y="97.79" size="1.778" layer="96" align="bottom-center"/>
 </instance>
 <instance part="SW1" gate="G$1" x="111.76" y="60.96" smashed="yes" rot="R90">
 <attribute name="NAME" x="108.204" y="58.42" size="1.27" layer="95" rot="R90"/>
@@ -4558,9 +4496,9 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <attribute name="NAME" x="60.96" y="102.87" size="1.778" layer="95"/>
 <attribute name="VALUE" x="60.96" y="53.34" size="1.778" layer="96"/>
 </instance>
-<instance part="PCB1" gate="P" x="127" y="154.94" smashed="yes">
-<attribute name="NAME" x="114.3" y="163.83" size="1.778" layer="95"/>
-<attribute name="VALUE" x="114.3" y="144.78" size="1.778" layer="96"/>
+<instance part="PCB1" gate="P" x="129.54" y="129.54" smashed="yes">
+<attribute name="NAME" x="116.84" y="138.43" size="1.778" layer="95"/>
+<attribute name="VALUE" x="116.84" y="119.38" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -4570,12 +4508,12 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <segment>
 <pinref part="T1" gate="G$1" pin="C"/>
 <pinref part="X1" gate="G$1" pin="P$2"/>
-<wire x1="134.62" y1="81.28" x2="134.62" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="81.28" x2="132.08" y2="78.74" width="0.1524" layer="91"/>
 <pinref part="R2" gate="G$1" pin="1"/>
-<wire x1="134.62" y1="78.74" x2="134.62" y2="76.2" width="0.1524" layer="91"/>
-<wire x1="134.62" y1="78.74" x2="147.32" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="147.32" y1="78.74" x2="147.32" y2="81.28" width="0.1524" layer="91"/>
-<junction x="134.62" y="78.74"/>
+<wire x1="132.08" y1="78.74" x2="132.08" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="78.74" x2="144.78" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="78.74" x2="144.78" y2="81.28" width="0.1524" layer="91"/>
+<junction x="132.08" y="78.74"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -4588,28 +4526,28 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <segment>
 <pinref part="T1" gate="G$1" pin="E"/>
 <pinref part="GND1" gate="1" pin="GND"/>
-<wire x1="134.62" y1="58.42" x2="134.62" y2="66.04" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="58.42" x2="132.08" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND2" gate="1" pin="GND"/>
-<wire x1="139.7" y1="149.86" x2="144.78" y2="149.86" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="149.86" x2="144.78" y2="144.78" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="124.46" x2="147.32" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="147.32" y1="124.46" x2="147.32" y2="119.38" width="0.1524" layer="91"/>
 <pinref part="PCB1" gate="P" pin="GND"/>
 </segment>
 <segment>
 <pinref part="T2" gate="G$1" pin="E"/>
 <pinref part="GND3" gate="1" pin="GND"/>
-<wire x1="177.8" y1="58.42" x2="177.8" y2="66.04" width="0.1524" layer="91"/>
+<wire x1="175.26" y1="58.42" x2="175.26" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="PCB2" gate="P" pin="GND"/>
 <pinref part="GND4" gate="1" pin="GND"/>
-<wire x1="182.88" y1="144.78" x2="182.88" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="119.38" x2="185.42" y2="121.92" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="R4" gate="G$1" pin="1"/>
 <pinref part="GND5" gate="1" pin="GND"/>
-<wire x1="208.28" y1="58.42" x2="208.28" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="58.42" x2="205.74" y2="60.96" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="SW1" gate="G$1" pin="P$1"/>
@@ -4620,28 +4558,28 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <segment>
 <pinref part="X1" gate="G$1" pin="P$1"/>
 <pinref part="U$3" gate="G$1" pin="USB_5V"/>
-<wire x1="134.62" y1="93.98" x2="134.62" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="93.98" x2="132.08" y2="91.44" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="R2" gate="G$1" pin="2"/>
 <pinref part="U$4" gate="G$1" pin="USB_5V"/>
-<wire x1="147.32" y1="93.98" x2="147.32" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="93.98" x2="144.78" y2="91.44" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="U$5" gate="G$1" pin="USB_5V"/>
-<wire x1="177.8" y1="93.98" x2="177.8" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="175.26" y1="93.98" x2="175.26" y2="91.44" width="0.1524" layer="91"/>
 <pinref part="M1" gate="G$1" pin="+"/>
 </segment>
 <segment>
 <pinref part="U$6" gate="G$1" pin="USB_5V"/>
 <pinref part="D1" gate="G$1" pin="C"/>
-<wire x1="190.5" y1="93.98" x2="190.5" y2="88.9" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="93.98" x2="187.96" y2="88.9" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="PIEZO3V" class="0">
 <segment>
 <pinref part="R1" gate="G$1" pin="1"/>
-<wire x1="93.98" y1="71.12" x2="119.38" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="93.98" y1="71.12" x2="116.84" y2="71.12" width="0.1524" layer="91"/>
 <label x="96.52" y="71.12" size="1.778" layer="95"/>
 <pinref part="PCB1" gate="A" pin="A10/IO27"/>
 </segment>
@@ -4649,13 +4587,13 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <net name="N$4" class="0">
 <segment>
 <pinref part="T2" gate="G$1" pin="C"/>
-<wire x1="177.8" y1="81.28" x2="177.8" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="177.8" y1="78.74" x2="177.8" y2="76.2" width="0.1524" layer="91"/>
-<wire x1="177.8" y1="78.74" x2="190.5" y2="78.74" width="0.1524" layer="91"/>
-<junction x="177.8" y="78.74"/>
+<wire x1="175.26" y1="81.28" x2="175.26" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="175.26" y1="78.74" x2="175.26" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="175.26" y1="78.74" x2="187.96" y2="78.74" width="0.1524" layer="91"/>
+<junction x="175.26" y="78.74"/>
 <pinref part="M1" gate="G$1" pin="-"/>
 <pinref part="D1" gate="G$1" pin="A"/>
-<wire x1="190.5" y1="83.82" x2="190.5" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="83.82" x2="187.96" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -4672,31 +4610,31 @@ Synchronizes the time and alarm with Google Calendar.</text>
 </segment>
 <segment>
 <pinref part="R3" gate="G$1" pin="1"/>
-<wire x1="162.56" y1="71.12" x2="149.86" y2="71.12" width="0.1524" layer="91"/>
-<label x="149.86" y="71.12" size="1.778" layer="95"/>
+<wire x1="160.02" y1="71.12" x2="147.32" y2="71.12" width="0.1524" layer="91"/>
+<label x="147.32" y="71.12" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
 <segment>
 <pinref part="PCB2" gate="P" pin="VCC"/>
 <pinref part="+3V2" gate="G$1" pin="+3V3"/>
-<wire x1="182.88" y1="167.64" x2="182.88" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="185.42" y1="142.24" x2="185.42" y2="137.16" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="+3V3" gate="G$1" pin="+3V3"/>
 <pinref part="Q1" gate="G$1" pin="C"/>
-<wire x1="208.28" y1="93.98" x2="208.28" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="93.98" x2="205.74" y2="91.44" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="PHOTO3V" class="0">
 <segment>
 <pinref part="Q1" gate="G$1" pin="E"/>
 <pinref part="R4" gate="G$1" pin="2"/>
-<wire x1="208.28" y1="81.28" x2="208.28" y2="76.2" width="0.1524" layer="91"/>
-<wire x1="208.28" y1="76.2" x2="208.28" y2="71.12" width="0.1524" layer="91"/>
-<wire x1="208.28" y1="76.2" x2="223.52" y2="76.2" width="0.1524" layer="91"/>
-<junction x="208.28" y="76.2"/>
-<label x="213.36" y="76.2" size="1.778" layer="95"/>
+<wire x1="205.74" y1="81.28" x2="205.74" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="76.2" x2="205.74" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="76.2" x2="220.98" y2="76.2" width="0.1524" layer="91"/>
+<junction x="205.74" y="76.2"/>
+<label x="210.82" y="76.2" size="1.778" layer="95"/>
 </segment>
 <segment>
 <wire x1="93.98" y1="93.98" x2="106.68" y2="93.98" width="0.1524" layer="91"/>
@@ -4713,36 +4651,40 @@ Synchronizes the time and alarm with Google Calendar.</text>
 <pinref part="PCB1" gate="A" pin="A7/IO32"/>
 </segment>
 </net>
-<net name="N$3" class="0">
-<segment>
-<pinref part="PCB2" gate="+" pin="SDA"/>
-<pinref part="PCB1" gate="A" pin="I2C_SDA"/>
-<wire x1="43.18" y1="109.22" x2="43.18" y2="81.28" width="0.1524" layer="91"/>
-<wire x1="43.18" y1="81.28" x2="55.88" y2="81.28" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$6" class="0">
-<segment>
-<pinref part="PCB2" gate="+" pin="SDC"/>
-<pinref part="PCB1" gate="A" pin="I2C_SCL"/>
-<wire x1="45.72" y1="109.22" x2="45.72" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="45.72" y1="78.74" x2="55.88" y2="78.74" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="3V" class="0">
 <segment>
 <pinref part="+3V1" gate="G$1" pin="+3V3"/>
-<wire x1="139.7" y1="160.02" x2="144.78" y2="160.02" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="160.02" x2="144.78" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="134.62" x2="147.32" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="147.32" y1="134.62" x2="147.32" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="PCB1" gate="P" pin="3V"/>
 </segment>
 </net>
 <net name="\USB" class="0">
 <segment>
 <pinref part="U$2" gate="G$1" pin="USB_5V"/>
-<wire x1="139.7" y1="154.94" x2="154.94" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="154.94" y1="154.94" x2="154.94" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="129.54" x2="157.48" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="129.54" x2="157.48" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="PCB1" gate="P" pin="\USB"/>
+</segment>
+</net>
+<net name="N$3" class="0">
+<segment>
+<pinref part="PCB1" gate="A" pin="I2C_SDA"/>
+<wire x1="55.88" y1="81.28" x2="53.34" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="81.28" x2="53.34" y2="116.84" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="116.84" x2="71.12" y2="116.84" width="0.1524" layer="91"/>
+<pinref part="PCB2" gate="+" pin="SDA"/>
+<wire x1="71.12" y1="116.84" x2="71.12" y2="119.38" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$6" class="0">
+<segment>
+<pinref part="PCB1" gate="A" pin="I2C_SCL"/>
+<wire x1="55.88" y1="78.74" x2="50.8" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="78.74" x2="50.8" y2="114.3" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="114.3" x2="73.66" y2="114.3" width="0.1524" layer="91"/>
+<pinref part="PCB2" gate="+" pin="SDC"/>
+<wire x1="73.66" y1="114.3" x2="73.66" y2="119.38" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
