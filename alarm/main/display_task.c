@@ -258,8 +258,6 @@ _buzzer_update(time_t const now, event_t const * const event, ipc_t * ipc)
     localtime_r(&now, &nowTm);
     localtime_r(&event->alarm, &alarmTm);
 
-    // 2BD make sure we don't sent this multiple times in the same minute
-
     if (event->valid && nowTm.tm_hour == alarmTm.tm_hour && nowTm.tm_min == alarmTm.tm_min) {
         if (difftime(last, now) > 60) {  //  make sure it doesn't go off multiple times in same minute
             sendToBuzzer(TO_BUZZER_MSGTYPE_START, ipc);

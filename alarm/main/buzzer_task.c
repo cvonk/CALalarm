@@ -33,7 +33,7 @@
 #include "ipc/ipc.h"
 #include "buzzer_task.h"
 
-static char const * const TAG = "buzzer_task";
+// static char const * const TAG = "buzzer_task";
 
 void
 sendToBuzzer(toBuzzerMsgType_t const dataType, ipc_t const * const ipc)
@@ -58,15 +58,9 @@ _button_isr_handler(void * arg)
 {
     ipc_t * const ipc = (ipc_t *) arg;
 
-    #define CONFIG_CALALARM_ALARM_OFF_DEBOUNCE_MSEC (100)
-
-    static int64_t start = 0;
     if (gpio_get_level(CONFIG_CALALARM_ALARM_OFF_PIN) == 0) {
-        start = esp_timer_get_time();
+        _sendToBuzzerFromISR(TO_BUZZER_MSGTYPE_STOP, ipc);
     } else {
-        if (esp_timer_get_time() - start > CONFIG_CALALARM_ALARM_OFF_DEBOUNCE_MSEC * 1000L) {
-            _sendToBuzzerFromISR(TO_BUZZER_MSGTYPE_STOP, ipc);
-        }
     }
 }
 
@@ -80,36 +74,27 @@ _button_isr_init(ipc_t * const ipc)
     gpio_isr_handler_add(CONFIG_CALALARM_ALARM_OFF_PIN, _button_isr_handler, ipc);
 }
 
-#define LEDC_TIMER              LEDC_TIMER_0
-#define LEDC_MODE               LEDC_LOW_SPEED_MODE
-#define LEDC_OUTPUT_IO          CONFIG_CALALARM_PIEZO3V_PIN // Define the output GPIO
-#define LEDC_CHANNEL            LEDC_CHANNEL_0
-#define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
-//#define LEDC_DUTY               (4095) // 50% duty cycle ((2 ** 13) - 1) * 50% = 4095
-#define LEDC_DUTY               (409) // 5% duty cycle ((2 ** 13) - 1) * 5% = 409
-#define LEDC_FREQUENCY          (1000) // Frequency [Hz]
-
 static void
 _buzzer_init()
 {
-    // prepare and then apply the LEDC PWM timer configuration
+    // use LED Control PWM timer
     ledc_timer_config_t ledc_timer = {
-        .speed_mode       = LEDC_MODE,
-        .timer_num        = LEDC_TIMER,
-        .duty_resolution  = LEDC_DUTY_RES,
-        .freq_hz          = LEDC_FREQUENCY,  // Set output frequency at 5 kHz
+        .speed_mode       = LEDC_LOW_SPEED_MODE,
+        .duty_resolution  = LEDC_TIMER_13_BIT, // Set duty resolution to 13 bits
+        .timer_num        = LEDC_TIMER_0,
+        .freq_hz          = 1000,  // [Hz]
         .clk_cfg          = LEDC_AUTO_CLK
     };
     ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
 
-    // prepare and then apply the LEDC PWM channel configuration
+    // use LED Control PWM channel
     ledc_channel_config_t ledc_channel = {
-        .speed_mode     = LEDC_MODE,
-        .channel        = LEDC_CHANNEL,
-        .timer_sel      = LEDC_TIMER,
+        .gpio_num       = CONFIG_CALALARM_PIEZO3V_PIN,
+        .speed_mode     = LEDC_LOW_SPEED_MODE,
+        .channel        = LEDC_CHANNEL_0,
         .intr_type      = LEDC_INTR_DISABLE,
-        .gpio_num       = LEDC_OUTPUT_IO,
-        .duty           = 0,
+        .timer_sel      = LEDC_TIMER_0,
+        .duty           = 0, // set later
         .hpoint         = 0
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));  
@@ -141,25 +126,24 @@ buzzer_task(void * ipc_void)
 
             switch (msg.dataType) {
                 case TO_BUZZER_MSGTYPE_START:
-                    ESP_LOGI(TAG, "rx start");
                     buzzer_on = true;
                     haptic_active = true;
                     break;
                 case TO_BUZZER_MSGTYPE_STOP:
-                    ESP_LOGI(TAG, "rx stop");
                     buzzer_on = false;
                     break;
             }
         }
+
         if (buzzer_on) {
-            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY));
-            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
-            ESP_LOGW(TAG, "haptic=%d", haptic_active);
+            uint32_t const duty = 409; // 5% duty cycle ((2 ** 13) - 1) * 5%
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
             gpio_set_level(CONFIG_CALALARM_HAPTIC3V_PIN, haptic_active);
             haptic_active =! haptic_active;
         } else {
-            ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
-            ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+            ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0));
+            ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
             gpio_set_level(CONFIG_CALALARM_HAPTIC3V_PIN, 0);
         }
     }
