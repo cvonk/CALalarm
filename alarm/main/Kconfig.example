@@ -50,18 +50,6 @@ menu "CALalarm"
             Number of minutes between polling the calendar events using Google Apps Script.
             When using push notifications this can be as high as e.g. 60 minutes.
 
-    config CALALARM_MQTT_DATA_TOPIC
-        string "MQTT data topic"
-        default "calalarm/data"
-        help
-            MQTT topic for data messages from the ESP32
-
-    config CALALARM_MQTT_CTRL_TOPIC
-        string "MQTT control topic"
-        default "calalarm/ctrl"
-        help
-            MQTT topic for ctrl messages to the ESP32
-
     config CALALARM_HARDCODED_WIFI_CREDENTIALS
         bool "Use hardcoded Wi-Fi credentials"
         default n
@@ -82,17 +70,4 @@ menu "CALalarm"
         help
             WiFi password (WPA or WPA2).
 
-    config CALALARM_HARDCODED_MQTT_CREDENTIALS
-        bool "Use hardcoded MQTT URL"
-        default n
-        help
-            Use a hardcoded MQTT credentials. Defaults to n for BLE provisioning.
-            
-    config CALALARM_HARDCODED_MQTT_URL
-        string "Hardcoded MQTT broker url endpoint"
-        default "mqtt://mqtt:passwd@host.domain:1883"
-        depends on CALALARM_HARDCODED_MQTT_CREDENTIALS
-        help
-            Hardcoded MQTT_URL. E.g. mqtt://mqtt:passwd@host.domain:1883.        
-        
 endmenu
