@@ -195,53 +195,46 @@ _oled_set_brightness(SSD1306_t * const dev, int const brightness)
 }
 
 static void
-_oled_set_status(SSD1306_t * const dev, char const * const str, bool const show_link)
+_oled_set_status(SSD1306_t * const dev, char const * const src, bool const show_link)
 {
+
+    char str[18];
+    char const * const link_symb = "\x03\x04";
+    snprintf(str, sizeof(str), "%-13s %2s", src, 1 || show_link ? link_symb : "");
     ssd1306_clear_line(dev, 3, false);
     ssd1306_display_text(dev, 3, (char *)str, strlen(str), false);
-
-    if (show_link) {
-        // add link symbol
-        int bitmap_width = 16;
-        int bitmap_height = 8;
-        uint8_t bitmap[] = {  // from `media/link_16x8.bmp` using 
-            0xc0, 0x63,       //   http://javl.github.io/image2cpp/
-            0x80, 0x39,       // or
-            0x1f, 0x1c,       //   https://en.radzio.dxp.pl/bitmap_converter/
-            0x39, 0x9c,
-            0x39, 0x9c,
-            0x39, 0xf8,
-            0x9c, 0x01,
-            0xc6, 0x03
-        };
-        int const xpos = ssd1306_get_width(dev) - bitmap_width;
-        int const ypos = ssd1306_get_height(dev) - bitmap_height;
-        ssd1306_bitmaps(dev, xpos, ypos, bitmap, bitmap_width / 8, bitmap_height, true);
-    }
 }
 
 static void
-_oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
+_oled_set_ampm(SSD1306_t * const dev, bool const is_pm)
 {
-    // show status (clears the screen, so we do this first)
-    char const * const status = event->valid ? event->title : "no alarm set";
-    _oled_set_status(dev, status, event->pushId);
-
-    // show time
-    struct tm nowTm;
-    localtime_r(&now, &nowTm);
-    uint8_t const hr = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
-
-    char str[17] = "               A";
-    if (nowTm.tm_hour >= 12) {
+    char str[] = "               A";
+    if (is_pm) {
         str[15] = 'P';
     }
     ssd1306_display_text(dev, 0, str, strlen(str), false);
     str[15] = 'M';
     ssd1306_display_text(dev, 1, str, strlen(str), false);
+}
 
+static void
+_oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
+{
+    struct tm nowTm;
+    localtime_r(&now, &nowTm);
+    uint8_t const hr = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
+
+    // show am/pm
+    _oled_set_ampm(dev, nowTm.tm_hour >= 12);
+
+    // show time
+    char str[7];
     snprintf(str, sizeof(str), "%2d:%02d", hr, nowTm.tm_min);
     ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
+
+    // show status (clears the screen, so we do this first)
+    char const * const status = event->valid ? event->title : "no alarm set";
+    _oled_set_status(dev, status, event->pushId);
 }
 
 void
