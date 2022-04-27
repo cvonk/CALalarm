@@ -200,7 +200,7 @@ _oled_set_status(SSD1306_t * const dev, char const * const src, bool const show_
 
     char str[18];
     char const * const link_symb = "\x03\x04";
-    snprintf(str, sizeof(str), "%-13s %2s", src, 1 || show_link ? link_symb : "");
+    snprintf(str, sizeof(str), "%-13s %2s", src, show_link ? link_symb : "");
     ssd1306_clear_line(dev, 3, false);
     ssd1306_display_text(dev, 3, (char *)str, strlen(str), false);
 }
