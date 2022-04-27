@@ -200,7 +200,7 @@ _oled_set_status(SSD1306_t * const dev, char const * const str, bool const show_
     ssd1306_clear_line(dev, 3, false);
     ssd1306_display_text(dev, 3, (char *)str, strlen(str), false);
 
-    if (show_link || 1) {
+    if (show_link) {
         // add link symbol
         int bitmap_width = 16;
         int bitmap_height = 8;
