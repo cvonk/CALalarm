@@ -90,7 +90,7 @@ _json2pushId(char const * const serializedJson, char * const pushId, uint const 
     }
     cJSON const *const jsonPushId = cJSON_GetObjectItem(jsonRoot, "pushId");
     if (!jsonPushId || jsonPushId->type != cJSON_String) {
-        ESP_LOGW(TAG, "JSON.pushId is missing or not an string");
+        ESP_LOGW(TAG, "JSON.pushId is missing (or not an string)");
         return;
     }
     strncpy(pushId, jsonPushId->valuestring, pushId_len);
