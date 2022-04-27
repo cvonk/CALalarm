@@ -195,15 +195,38 @@ _oled_set_brightness(SSD1306_t * const dev, int const brightness)
 }
 
 static void
-_oled_set_status(SSD1306_t * const dev, char const * const str)
+_oled_set_status(SSD1306_t * const dev, char const * const str, bool const show_link)
 {
     ssd1306_clear_line(dev, 3, false);
     ssd1306_display_text(dev, 3, (char *)str, strlen(str), false);
+
+    if (show_link || 1) {
+        // add link symbol
+        int bitmap_width = 16;
+        int bitmap_height = 8;
+        uint8_t bitmap[] = {  // from `media/link_16x8.bmp` using 
+            0xc0, 0x63,       //   http://javl.github.io/image2cpp/
+            0x80, 0x39,       // or
+            0x1f, 0x1c,       //   https://en.radzio.dxp.pl/bitmap_converter/
+            0x39, 0x9c,
+            0x39, 0x9c,
+            0x39, 0xf8,
+            0x9c, 0x01,
+            0xc6, 0x03
+        };
+        int const xpos = ssd1306_get_width(dev) - bitmap_width;
+        int const ypos = ssd1306_get_height(dev) - bitmap_height;
+        ssd1306_bitmaps(dev, xpos, ypos, bitmap, bitmap_width / 8, bitmap_height, true);
+    }
 }
 
 static void
 _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
+    // show status (clears the screen, so we do this first)
+    char const * const status = event->valid ? event->title : "no alarm set";
+    _oled_set_status(dev, status, event->pushId);
+
     // show time
     struct tm nowTm;
     localtime_r(&now, &nowTm);
@@ -219,29 +242,6 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
 
     snprintf(str, sizeof(str), "%2d:%02d", hr, nowTm.tm_min);
     ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
-
-    // show status
-    char const * const status = event->valid ? event->title : "no alarm set";
-    _oled_set_status(dev, status);
-
-    // add link symbol
-    int bitmap_width = 16;
-    int bitmap_height = 8;
-    uint8_t bitmap[] = {  // `from media/link_16x8.bmp` using 
-        0xc0, 0x63,       //   http://javl.github.io/image2cpp/
-        0x80, 0x39,       // or
-        0x1f, 0x1c,       //   https://en.radzio.dxp.pl/bitmap_converter/
-        0x39, 0x9c,
-        0x39, 0x9c,
-        0x39, 0xf8,
-        0x9c, 0x01,
-        0xc6, 0x03
-    };
-    if (event->pushId) {
-        int const xpos = ssd1306_get_width(dev) - bitmap_width;
-        int const ypos = ssd1306_get_height(dev) - bitmap_height;
-        ssd1306_bitmaps(dev, xpos, ypos, bitmap, bitmap_width / 8, bitmap_height, true);
-    }
 }
 
 void
@@ -288,7 +288,7 @@ display_task(void * ipc_void)
                     _set_time(now);
                     break;
                 case TO_DISPLAY_MSGTYPE_STATUS:
-                    _oled_set_status(&dev, msg.data);
+                    _oled_set_status(&dev, msg.data, false);
                     break;
             }
             free(msg.data);
