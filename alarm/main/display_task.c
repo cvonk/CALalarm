@@ -123,11 +123,9 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
         ESP_LOGW(TAG, "JSON.pushId is missing (or not a String)");
         free(event->pushId);
         event->pushId = NULL;
-        ESP_LOGW(TAG, "event->pushId = null");
     } else {
         free(event->pushId);
         event->pushId = strdup(jsonPushId->valuestring);
-        ESP_LOGW(TAG, "event->pushId = %s", event->pushId);
     }
 
     cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "events");
@@ -277,7 +275,6 @@ display_task(void * ipc_void)
             switch(msg.dataType) {
                 case TO_DISPLAY_MSGTYPE_JSON:
                     (void)_json2event(msg.data, &now, &event); // translate from serialized JSON `msg` to `event`
-                    ESP_LOGI(TAG, "Update tod");
                     _set_time(now);
                     break;
                 case TO_DISPLAY_MSGTYPE_STATUS:
