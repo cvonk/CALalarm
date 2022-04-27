@@ -140,6 +140,7 @@ https_client_task(void * ipc_void)
         uint const waitMinutes = pushActive ? pushServiceDuration : CONFIG_CALALARM_GAS_INTERVAL;
         toClientMsg_t msg;
         if (xQueueReceive(ipc->toClientQ, &msg, waitMinutes * 60000L / portTICK_PERIOD_MS) == pdPASS) {
+            // when we receive a push notification, we loop and pull the information using the Google Script
             free(msg.data);
         }
     }

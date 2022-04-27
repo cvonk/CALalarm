@@ -29,11 +29,18 @@
 
 #include "httpd.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
 #define MAX_CONTENT_LEN (2048)
 #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 static char const * const TAG = "httpd_google_push";
+
+// to test this, use the Chrome extension "Talend API Tester"
+//   method = post
+//   URL = http://10.1.1.142:80/api/push
 
 esp_err_t
 _httpd_google_push_handler(httpd_req_t * req)
@@ -57,17 +64,17 @@ _httpd_google_push_handler(httpd_req_t * req)
         }
         len += received;
     }
-    uint const grs_len = 10;
-    char grs[grs_len];
-    bool const pushAck = httpd_req_get_hdr_value_str(req, "X-Goog-Resource-State", grs, grs_len) == ESP_OK && strcmp(grs, "sync") == 0;
-    if (!pushAck) {
-        buf[req->content_len] = '\0';
-        ESP_LOGI(TAG, "Google push notification");
+    buf[req->content_len] = '\0';
 
+    char grs[10];
+    bool const xgrs_header = httpd_req_get_hdr_value_str(req, "X-Goog-Resource-State", grs, ARRAY_SIZE(grs)) == ESP_OK;
+    bool const xgrs_ack = xgrs_header && strcmp(grs, "sync") == 0;
+
+    if (!xgrs_ack) {  // ignore acknowledgements
+        ESP_LOGI(TAG, "Google push notification");
         sendToClient(TO_CLIENT_MSGTYPE_TRIGGER, buf, ipc);
     }
     free(buf);
-    httpd_resp_sendstr(req, "thank you");
+    httpd_resp_sendstr(req, "Thank you");
     return ESP_OK;
 }
-
