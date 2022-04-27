@@ -108,28 +108,31 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
     }
     cJSON * const jsonRoot = cJSON_Parse(serializedJson);
     if (jsonRoot->type != cJSON_Object) {
-        ESP_LOGE(TAG, "JSON root is not an Object");
+        ESP_LOGE(TAG, "JSON err");
         return 0;
     }
     cJSON const *const jsonTime = cJSON_GetObjectItem(jsonRoot, "time");
     if (!jsonTime || jsonTime->type != cJSON_String) {
-        ESP_LOGE(TAG, "JSON.time is missing or not an String");
+        ESP_LOGE(TAG, "JSON.time err");
         return 0;
     }
     *time = _str2time(jsonTime->valuestring);
 
     cJSON const *const jsonPushId = cJSON_GetObjectItem(jsonRoot, "pushId");
     if (!jsonPushId || jsonPushId->type != cJSON_String) {
-        ESP_LOGW(TAG, "JSON.event[0].pushId is missing or not a String");
+        ESP_LOGW(TAG, "JSON.pushId is missing (or not a String)");
         free(event->pushId);
         event->pushId = NULL;
+        ESP_LOGW(TAG, "event->pushId = null");
     } else {
+        free(event->pushId);
         event->pushId = strdup(jsonPushId->valuestring);
+        ESP_LOGW(TAG, "event->pushId = %s", event->pushId);
     }
 
     cJSON const *const jsonEvents = cJSON_GetObjectItem(jsonRoot, "events");
     if (!jsonEvents || jsonEvents->type != cJSON_Array) {
-        ESP_LOGE(TAG, "JSON.events is missing or not an Array");
+        ESP_LOGE(TAG, "JSON.events err");
         return 0;
     }
 
@@ -137,7 +140,7 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
 
         cJSON const *const jsonEvent = cJSON_GetArrayItem(jsonEvents, 0);
         if (!jsonEvent || jsonEvent->type != cJSON_Object) {
-            ESP_LOGE(TAG, "JSON.events[0] is missing or not an Object");
+            ESP_LOGE(TAG, "JSON.events[0] err");
             return 0;
         }
 
@@ -147,19 +150,19 @@ _json2event(char const * const serializedJson, time_t * const time, event_t * co
         cJSON const *const jsonStopObj = cJSON_GetObjectItem(jsonEvent, "stop");
 
         if (!jsonTitleObj || jsonTitleObj->type != cJSON_String) {
-            ESP_LOGE(TAG, "JSON.event[0].title is missing or not a String");
+            ESP_LOGE(TAG, "JSON.event[0].title err");
             return 0;
         }
         if (!jsonAlarmObj || jsonAlarmObj->type != cJSON_String) {
-            ESP_LOGE(TAG, "JSON.event[0].alarm is missing or not a String");
+            ESP_LOGE(TAG, "JSON.event[0].alarm err");
             return 0;
         }
         if (!jsonStartObj || jsonStartObj->type != cJSON_String) {
-            ESP_LOGE(TAG, "JSON.event[0].start is missing or not a String");
+            ESP_LOGE(TAG, "JSON.event[0].start err");
             return 0;
         }
         if (!jsonStopObj || jsonStopObj->type != cJSON_String) {
-            ESP_LOGE(TAG, "JSON.event[0].end is missing or not a String");
+            ESP_LOGE(TAG, "JSON.event[0].end err");
             return 0;
         }
 
@@ -187,7 +190,7 @@ _oled_init(SSD1306_t * const dev)
 static void
 _oled_set_brightness(SSD1306_t * const dev, int const brightness)
 {
-    ESP_LOGI(TAG, "brightness=%u", brightness);
+    //ESP_LOGI(TAG, "brightness=%u", brightness);
     ssd1306_contrast(dev, brightness);  // 2nd arg is uint8_t
 }
 
@@ -199,54 +202,45 @@ _oled_set_status(SSD1306_t * const dev, char const * const str)
 }
 
 static void
-_copy_title_pad(event_t const * const event, char * const str, size_t const size)
-{
-    bool past_end = false;
-    for (uint8_t ii = 0; ii < size - 1; ii++) {
-        if (event->title[ii] != '\0' && !past_end) {
-            str[ii] = event->title[ii];
-        } else {
-            str[ii] = ' ';
-            past_end = true;
-        }
-    }
-    str[size - 1] = '\0';
-}
-
-static void
 _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
+    // show time
     struct tm nowTm;
     localtime_r(&now, &nowTm);
-
     uint8_t const hr = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
 
     char str[17] = "               A";
     if (nowTm.tm_hour >= 12) {
         str[15] = 'P';
     }
-	ssd1306_display_text(dev, 0, str, strlen(str), false);
+    ssd1306_display_text(dev, 0, str, strlen(str), false);
     str[15] = 'M';
-	ssd1306_display_text(dev, 1, str, strlen(str), false);
+    ssd1306_display_text(dev, 1, str, strlen(str), false);
 
     snprintf(str, sizeof(str), "%2d:%02d", hr, nowTm.tm_min);
-	ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
+    ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
 
-    if (event->valid) {
-        struct tm alarmTm;
-        localtime_r(&event->alarm, &alarmTm);  // or maybe event->start to show the apt time itself
+    // show status
+    char const * const status = event->valid ? event->title : "no alarm set";
+    _oled_set_status(dev, status);
 
-        char title[9];
-        _copy_title_pad(event, title, sizeof(title));
-        
-        char link_symbol[] = { 0x03, 0x04, 0x00 };
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-truncation"
-        snprintf(str, sizeof(str), "%02d:%02d %s%s", alarmTm.tm_hour, alarmTm.tm_min, title, 1 || event->pushId ? link_symbol : "");
-#pragma GCC diagnostic pop
-        _oled_set_status(dev, str);
-    } else {
-    	_oled_set_status(dev, "No alarm set");
+    // add link symbol
+    int bitmap_width = 16;
+    int bitmap_height = 8;
+    uint8_t bitmap[] = {  // `from media/link_16x8.bmp` using 
+        0xc0, 0x63,       //   http://javl.github.io/image2cpp/
+        0x80, 0x39,       // or
+        0x1f, 0x1c,       //   https://en.radzio.dxp.pl/bitmap_converter/
+        0x39, 0x9c,
+        0x39, 0x9c,
+        0x39, 0xf8,
+        0x9c, 0x01,
+        0xc6, 0x03
+    };
+    if (event->pushId) {
+        int const xpos = ssd1306_get_width(dev) - bitmap_width;
+        int const ypos = ssd1306_get_height(dev) - bitmap_height;
+        ssd1306_bitmaps(dev, xpos, ypos, bitmap, bitmap_width / 8, bitmap_height, true);
     }
 }
 
