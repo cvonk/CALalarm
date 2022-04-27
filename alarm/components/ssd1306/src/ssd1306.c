@@ -382,7 +382,7 @@ void ssd1306_bitmaps(SSD1306_t * dev, int xpos, int ypos, uint8_t * bitmap, int 
 	uint8_t page = (ypos / 8);
 	uint8_t _seg = xpos;
 	uint8_t dstBits = (ypos % 8);
-	ESP_LOGI(TAG, "ypos=%d page=%d dstBits=%d", ypos, page, dstBits);
+	//ESP_LOGI(TAG, "ypos=%d page=%d dstBits=%d", ypos, page, dstBits);
 	int offset = 0;
 	for(int _height=0;_height<height;_height++) {
 		for (int index=0;index<width;index++) {
