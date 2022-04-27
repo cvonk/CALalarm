@@ -16,7 +16,8 @@
         "complex": "c",
         "buzzer_task.h": "c",
         "sstream": "c",
-        "regex": "c"
+        "regex": "c",
+        "future": "c"
     },
     "cmake.configureOnOpen": false
 }
