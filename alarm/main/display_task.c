@@ -218,20 +218,35 @@ _oled_set_ampm(SSD1306_t * const dev, bool const is_pm)
 static void
 _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const event)
 {
-    struct tm nowTm;
-    localtime_r(&now, &nowTm);
-    uint8_t const hr = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
-
-    // show am/pm
-    _oled_set_ampm(dev, nowTm.tm_hour >= 12);
-
     // show time
-    char str[7];
-    snprintf(str, sizeof(str), "%2d:%02d", hr, nowTm.tm_min);
-    ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
+    {
+        struct tm nowTm;
+        localtime_r(&now, &nowTm);
+        uint8_t const hrs = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
+        uint8_t const min = nowTm.tm_min;
 
-    // show status (clears the screen, so we do this first)
-    char const * const status = event->valid ? event->title : "no alarm set";
+        // show am/pm
+        _oled_set_ampm(dev, nowTm.tm_hour >= 12);
+
+        // show time
+        char str[6];
+        if (snprintf(str, sizeof(str), "%2d:%02d", hrs, min) < 0) {
+            ESP_LOGE(TAG, "%s", __FUNCTION__);  // work around `-Wformat-truncation`
+        }
+        ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
+    }
+
+    // show status
+    char status[17];
+    if (event->valid) {
+        struct tm alarmTm;
+        localtime_r(&event->alarm, &alarmTm);
+        uint8_t const hrs = (alarmTm.tm_hour % 12 == 0) ? 12 : alarmTm.tm_hour % 12;
+        uint8_t const min = alarmTm.tm_min;
+        snprintf(status, ARRAY_SIZE(status), "%2d:%02d %s", hrs, min, event->title);
+    } else {
+        strcpy(status, "no alarm set");
+    }
     _oled_set_status(dev, status, event->pushId);
 }
 
