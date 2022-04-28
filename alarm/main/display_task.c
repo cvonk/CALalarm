@@ -197,8 +197,13 @@ _oled_set_status(SSD1306_t * const dev, char const * const src, bool const show_
 {
 
     char str[18];
-    char const * const link_symb = "\x03\x04";
-    snprintf(str, sizeof(str), "%-13s %2s", src, show_link ? link_symb : "");
+    if (show_link) {
+        char const * const link_symb = " \x03\x04";
+        snprintf(str, sizeof(str), "%-13s", src);  // pad to 13 characters
+        strcpy(str + 13, link_symb);
+    } else {
+        snprintf(str, sizeof(str), "%-16s", src);  //  pad to 16 characters
+    }
     ssd1306_clear_line(dev, 3, false);
     ssd1306_display_text(dev, 3, (char *)str, strlen(str), false);
 }
@@ -222,17 +227,14 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
     {
         struct tm nowTm;
         localtime_r(&now, &nowTm);
+
+        // jump through hoops for 12-hour time
         uint8_t const hrs = (nowTm.tm_hour % 12 == 0) ? 12 : nowTm.tm_hour % 12;
         uint8_t const min = nowTm.tm_min;
-
-        // show am/pm
         _oled_set_ampm(dev, nowTm.tm_hour >= 12);
 
-        // show time
         char str[6];
-        if (snprintf(str, sizeof(str), "%2d:%02d", hrs, min) < 0) {
-            ESP_LOGE(TAG, "%s", __FUNCTION__);  // work around `-Wformat-truncation`
-        }
+        snprintf(str, sizeof(str), "%2d:%02d", hrs % 100, min % 100);  // work around `-Wformat-truncation`
         ssd1306_display_text_x3(dev, 0, str, strlen(str), false);
     }
 
@@ -243,7 +245,7 @@ _oled_update(SSD1306_t * const dev, time_t const now, event_t const * const even
         localtime_r(&event->alarm, &alarmTm);
         uint8_t const hrs = (alarmTm.tm_hour % 12 == 0) ? 12 : alarmTm.tm_hour % 12;
         uint8_t const min = alarmTm.tm_min;
-        snprintf(status, ARRAY_SIZE(status), "%2d:%02d %s", hrs, min, event->title);
+        snprintf(status, ARRAY_SIZE(status), "%d:%02d %-10s", hrs % 100, min % 100, event->title);  // work around `-Wformat-truncation`
     } else {
         strcpy(status, "no alarm set");
     }
