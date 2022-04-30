@@ -113,6 +113,7 @@ Assemble the circuit on the prototyping board. Then stack `PCB1` and `PCB2` on t
 ![Assembled](media/assembly-1_resize.jpg) 
 ![Assembled](media/assembly-2_resize.jpg)
 ![Assembled](media/assembly-3_resize.jpg)
+![Assembled](media/finished_resize.jpg)
 
 ## Feedback
 
